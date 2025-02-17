@@ -25,10 +25,12 @@ const userSchema = new mongoose.Schema({
     phoneNumber: {
         type: String,
         unique: true,
+        sparse: true,
         match: [
             /^\+?[1-9]\d{9,14}$/,
             "Invalid phone number format. Please use E.164 format, e.g., +1234567890."
-        ]
+        ],
+        default: undefined
     },
     userName: {
         type: String,
@@ -48,7 +50,10 @@ const userSchema = new mongoose.Schema({
     },
     googleId: {
         type: String,
-        trim: true
+        trim: true,
+        sparse: true,
+        default: undefined,
+        unique: true
     },
     groups: {
         type: Array
