@@ -15,20 +15,6 @@ const adminSchema = new mongoose.Schema({
         trim: true,
         match: [/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/, "Please enter a valid email"]
     },
-    phoneNumber: {
-        type: String,
-        match: [
-            /^\+?[1-9]\d{9,14}$/,
-            "Invalid phone number format. Please use E.164 format, e.g., +1234567890."
-        ],
-        default: undefined
-    },
-    userName: {
-        type: String,
-        trim: true,
-        minlength: [3, "Username must be at least 3 characters"],
-        maxlength: [30, "Username must be at most 30 characters"]
-    },
     password: {
         type: String
     }
