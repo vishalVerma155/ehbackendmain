@@ -3,7 +3,8 @@ const app = express();
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-const affiliateRouter = require('./routes/affiliate/web/affiliate.web.routes.js')
+const affiliateRouter = require('./routes/affiliate/web/affiliate.web.routes.js');
+const adminRouter = require('./routes/admin/admin.routes.js');
 
 
 // Load config from env file
@@ -20,6 +21,8 @@ const dbconnect = require('./config/database.js');
 
 // routes
 app.use("/affiliate", affiliateRouter);
+app.use("/admin", adminRouter);
+
 
 // Start the server
 app.listen(PORT, () => {

@@ -15,6 +15,11 @@ const userSchema = new mongoose.Schema({
         minlength: [2, "Last name must be at least 2 characters"],
         maxlength: [50, "Last name must be at most 50 characters"]
     },
+    affiliateId: {
+        type: String,
+        required: [true, "Affiliate id is required"],
+        unique: true
+    },
     email: {
         type: String,
         required: [true, "Email is required"],
@@ -52,7 +57,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true,
         sparse: true,
-        default: undefined,
         unique: true
     },
     groups: {
@@ -65,23 +69,17 @@ const userSchema = new mongoose.Schema({
         enum: ["affiliate", "vendor"]
     },
     password: {
-        type: String,
-        minlength: [8, "Password must be at least 6 characters"],
-        match: [/^(?=[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,}$/, "Password must be at least 8 characters, start with a capital letter, and contain at least one digit and one special character."]
-    },
-    affiliateId: {
-        type: String,
-        required: [true, "Affiliate id is required"]
+        type: String
     },
     referrer: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Affiliate",
+        ref: "User",
         default: null
     },
     referredUsers: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Affiliate"
+            ref: "User"
         }
     ]
 }, { timestamps: true });

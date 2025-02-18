@@ -1,13 +1,17 @@
 
 const express = require('express');
 // const verifyJWT = require('../../middleware/authMIddleware.js');
-const {registerAffiliateWithGoogle, generateAffiliateLink} = require('../../../controllers/user/web/user.web.controllers.js');
+const {registerAffiliateWithGoogle, generateAffiliateLink, registerAffiliate} = require('../../../controllers/user/web/user.web.controllers.js');
 
 
 
 const router = express.Router();
 
-// affiliate register router
+// register affiliate with email and password
+router.post("/registerAffiliate", registerAffiliate);
+
+
+// affiliate register router with google
 router.post("/registerAffiliateWithGoogle",registerAffiliateWithGoogle);
 
 // generate affiliate link
