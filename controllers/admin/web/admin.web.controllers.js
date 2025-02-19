@@ -73,8 +73,6 @@ const loginAdmin = async (req, res) => {
             return res.status(401).json({ Message: "Invalid password" });
         }
 
-
-
         // generate jwt token
         const accessToken = generateJWT({
             _id: user._id,
@@ -90,6 +88,12 @@ const loginAdmin = async (req, res) => {
     }
 };
 
+const editAdmin = async(req, res) =>{
+    const data = req.body;
+    console.log(data);
+    res.status(200).json({ Message: "Admin has been  sucessfully Loged in.", Admin: data });
+}
+
 const getAllUsersList = async (req, res) => {
 
     try {
@@ -103,10 +107,19 @@ const getAllUsersList = async (req, res) => {
         all_Users_List = await User.find({ role: userType });
         return res.status(200).json({ Message: `${userType} has been successfully fetched.`, users : all_Users_List });
 
-
     } catch (error) {
         return res.status(400).json({ Error: error.message });
     }
 }
 
-module.exports = { registerAdmin, loginAdmin, getAllUsersList };
+const searchUser = async (req, res) =>{
+    try {
+    const body = req.body;
+    const user = await User.findOne(body);
+    return res.status(200).json({ Message: `User has been successfully fetched.`, user });
+    } catch (error) {
+        return res.status(400).json({ Error: error.message });
+    }
+}
+
+module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, editAdmin };

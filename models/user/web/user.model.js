@@ -15,9 +15,9 @@ const userSchema = new mongoose.Schema({
         minlength: [2, "Last name must be at least 2 characters"],
         maxlength: [50, "Last name must be at most 50 characters"]
     },
-    affiliateId: {
+    userId: {
         type: String,
-        required: [true, "Affiliate id is required"],
+        required: [true, "User id is required"],
         unique: true
     },
     email: {

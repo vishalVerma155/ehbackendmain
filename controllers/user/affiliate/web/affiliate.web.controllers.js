@@ -1,7 +1,7 @@
-const User = require('../../../models/user/web/user.model.js');
-const Counter = require('../../../models/user/countModel/affiliateCount.model.js');
-const generateJWT = require('../../../utils/jwt.js');
-const { comparePassword, hashPassword } = require('../../../utils/bcrypt.js');
+const User = require('../../../../models/user/web/user.model.js');
+const Counter = require('../../../../models/user/countModel/affiliateCount.model.js');
+const generateJWT = require('../../../../utils/jwt.js');
+const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js');
 
 // register affiliate with email id and password
 const registerAffiliate = async (req, res) => {
@@ -23,7 +23,7 @@ const registerAffiliate = async (req, res) => {
 
       if (referrerAffiliateId) {
          referrerAff = await User.findOne({ // find referrer affiliate
-            affiliateId: referrerAffiliateId
+            userId: referrerAffiliateId
          });
          if (!referrerAff) {
             return res.status(404).json({ Error: "  Refferrer Affiliate not found" });
@@ -54,14 +54,16 @@ const registerAffiliate = async (req, res) => {
          phoneNumber,
          userName,
          country : country ? country : "India",
-         affiliateId : "fa1",
+         userId : "fa1",
          referrer: referrerAff ? referrerAff._id : null,
          password: hashedPassword
       })
 
+      await newUser.save(); // save user
+
       const count = await Counter.increment('affiliate');
       const affiliateId = `AF${count}`; // create affiliate id
-      newUser.affiliateId = affiliateId;
+      newUser.userId = affiliateId;
 
       if (referrerAff) {
          referrerAff.referredUsers.push(newUser._id); // push user id into referrer tree
@@ -87,6 +89,7 @@ const registerAffiliate = async (req, res) => {
 
 // register affiliate with google
 const registerAffiliateWithGoogle = async (req, res) => {
+   
    try {
       const { firstName, lastName, email, googleId, aff_id } = req.body; // get affiliate id
       const referrerAffiliateId = aff_id; // get referrer affiliate id
@@ -95,7 +98,7 @@ const registerAffiliateWithGoogle = async (req, res) => {
 
       if (referrerAffiliateId) {
          referrerAff = await User.findOne({ // find referrer affiliate
-            affiliateId: referrerAffiliateId
+            userId: referrerAffiliateId
          });
          if (!referrerAff) {
             return res.status(404).json({ Error: "  Refferrer Affiliate not found" });
@@ -122,14 +125,16 @@ const registerAffiliateWithGoogle = async (req, res) => {
          firstName,
          lastName,
          email,
-         affiliateId : "fa1",
+         userId : "fa1",
          referrer: referrerAff ? referrerAff._id : null, // check reffere is existed or not
          googleId
       })
 
+      await newUser.save(); // save user
+
       const count = await Counter.increment('affiliate');
       const affiliateId = `AF${count}`; // create affiliate id
-      newUser.affiliateId = affiliateId;
+      newUser.userId = affiliateId;
 
       if (referrerAff) {
          referrerAff.referredUsers.push(newUser._id); // push refered user id in refferer array 
@@ -164,4 +169,40 @@ const generateAffiliateLink = (req, res) => {
    }
 };
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate };
+const editAffiliate = async (req, res) => {
+   try {
+
+       const { firstName, lastName, country } = req.body;
+       const user = req.user._id;
+
+       if (!user) {
+           return res.status(500).json({ success: false, message: "Affiliate is not loged in" });
+       }
+
+       let payload;
+       if (firstName) {
+           payload.firstName = firstName;
+       }
+
+       if (lastName) {
+           payload.lastName = lastName;
+       }
+
+       if (country) {
+           payload.country = country;
+       }
+
+       const updatedAffiliate = await User.findByIdAndUpdate(user, ...payload, { new: true, runValidators: true });
+
+       if (!updatedAffiliate) {
+           return res.status(400).json({ success: false, message: "Affiliate is not updated" });
+       }
+
+       return res.status(200).json({ success: true, message: "Affiliate is updated", updatedAffiliate });
+   } catch (error) {
+       res.status(500).json({ success: false, error: error.message });
+   }
+
+}
+
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, editAffiliate };
