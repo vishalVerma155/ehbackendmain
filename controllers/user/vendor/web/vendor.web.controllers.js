@@ -73,57 +73,111 @@ const registerVendor = async (req, res) => {
 
 // register vendor with google
 const registerVendorWithGoogle = async (req, res) => {
-
     try {
-        const { firstName, lastName, email, googleId, store } = req.body; // get affiliate id
+        const { firstName, lastName, email, googleId } = req.body; // get affiliate id
 
-        // check blank fields
-        const isBlank = [firstName, lastName, email, googleId, store].some(fields => fields.trim() === "");
 
-        if (isBlank) {
-            return res.status(401).json({ Message: "All fields are compulsary" });
+        if (googleId) {
+
+            if (googleId.trim() === "") {
+                return res.status(401).json({ Message: "Google id not found." });
+            }
+
+            const isUserExisted = await User.findOne({ googleId: googleId });
+
+            if (!isUserExisted) {
+                // check blank fields
+                const isBlank = [firstName, lastName, email].some(fields => fields.trim() === "");
+
+                if (isBlank) {
+                    return res.status(401).json({ Message: "All fields are compulsary" });
+                }
+
+
+                // create affiliate
+                const newUser = new User({
+                    firstName,
+                    lastName,
+                    email,
+                    userId: "fa1",
+                    googleId
+                })
+
+                await newUser.save(); // save user
+
+                const count = await Counter.increment('vendor');
+                const vendorId = `VN${count}`; // create affiliate id
+                newUser.userId = vendorId;
+
+                // save affiliate
+                await newUser.save();
+
+                return res.status(200).json({ Message: "Vendor has been  sucessfully register.", vendor: newUser });
+            }
+
+
+            const payload = {
+                _id: isUserExisted._id,
+                email: isUserExisted.email
+            }
+
+            // generate jwt token
+            const accessToken = generateJWT(payload);
+
+            res.cookie("AccessToken", accessToken);
+
+
+            return res.status(200).json({ Message: "vendor has been  sucessfully Loged in.", vendor: isUserExisted, token : accessToken });
         }
 
-        // check if affiliate is already existed
-        const isUserExisted = await User.findOne({ email: email });
+        return res.status(404).json({ Error: "Google id not found" });
 
-        if (isUserExisted) {
-            return res.status(401).json({ Message: "User is already existed. Please login or choose other user name" });
-        }
-
-        // create affiliate
-        const newUser = new User({
-            firstName,
-            lastName,
-            email,
-            userId: "fa1",
-            googleId,
-            role: "vendor",
-            storeName: store
-        })
-
-        // save affiliate
-        await newUser.save();
-
-        const count = await Counter.increment('vendor');
-        const vendorId = `VN${count}`; // create affiliate id
-        newUser.userId = vendorId;
-
-        // save affiliate
-        await newUser.save();
-
-        const user = await User.findOne({ email: newUser.email }); // double  check user
-
-        if (!user) {
-            return res.status(404).json({ Message: "User not found. There is something problem in user data saving" });
-        }
-
-        // return response
-        res.status(200).json({ Message: "Vendor has been  sucessfully register.", affiliate: user });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
+// login vendor
+const loginVendor = async (req, res) => {
+    try {
+        const { userName, password } = req.body;
+
+        if (userName.trim() === "" || password.trim() === "") {
+            return res.status(401).json({ Message: "All fields are compulsary" });
+        }
+
+        const user = await User.findOne({ $or: [{ userName }, { email: userName }] });
+
+
+        if (!user) {
+            return res.status(401).json({ Message: "User is not existed." });
+        }
+
+        // compare password
+        const isPasswordCorrect = await comparePassword(password, user.password);
+
+        if (!isPasswordCorrect) {
+            return res.status(401).json({ Message: "Invalid password" });
+        }
+
+        const payload = {
+            _id: user._id,
+            email: user.email
+        }
+
+        // generate jwt token
+        const accessToken = generateJWT(payload);
+
+        res.cookie("AccessToken", accessToken);
+
+        // return response
+        return res.status(200).json({ Message: "Vendor has been sucessfully Loged in.", vendor: user, token: accessToken });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
 
 const editVendor = async (req, res) => {
     try {
@@ -166,4 +220,4 @@ const editVendor = async (req, res) => {
 
 }
 
-module.exports = { registerVendor, registerVendorWithGoogle, editVendor };
+module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor };

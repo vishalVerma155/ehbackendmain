@@ -1,7 +1,7 @@
 
 const express = require('express');
 const verifyJWT = require('../../../middleware/authMiddleware.js');
-const {registerVendor, registerVendorWithGoogle, editVendor} = require('../../../controllers/user/vendor/web/vendor.web.controllers.js');
+const {registerVendor, registerVendorWithGoogle, editVendor, } = require('../../../controllers/user/vendor/web/vendor.web.controllers.js');
 
 
 

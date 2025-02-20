@@ -38,7 +38,7 @@ const registerAffiliate = async (req, res) => {
       }
 
       // check if affiliate is already existed
-      const isUserExisted = await User.findOne({ email}); 
+      const isUserExisted = await User.findOne({ email });
 
       // 
       if (isUserExisted) {
@@ -53,8 +53,8 @@ const registerAffiliate = async (req, res) => {
          email,
          phoneNumber,
          userName,
-         country : country ? country : "India",
-         userId : "fa1",
+         country: country ? country : "India",
+         userId: "fa1",
          referrer: referrerAff ? referrerAff._id : null,
          password: hashedPassword
       })
@@ -73,7 +73,7 @@ const registerAffiliate = async (req, res) => {
       // save affiliate
       await newUser.save();
 
-      const user = await User.findOne({ email : newUser.email}); // double  check user
+      const user = await User.findOne({ email: newUser.email }); // double  check user
 
       if (!user) {
          return res.status(404).json({ Message: "User not found. There is something problem in user data saving" });
@@ -89,73 +89,129 @@ const registerAffiliate = async (req, res) => {
 
 // register affiliate with google
 const registerAffiliateWithGoogle = async (req, res) => {
-   
+
    try {
       const { firstName, lastName, email, googleId, aff_id } = req.body; // get affiliate id
-      const referrerAffiliateId = aff_id; // get referrer affiliate id
 
-      let referrerAff; // declair referrer affiliate
 
-      if (referrerAffiliateId) {
-         referrerAff = await User.findOne({ // find referrer affiliate
-            userId: referrerAffiliateId
-         });
-         if (!referrerAff) {
-            return res.status(404).json({ Error: "  Refferrer Affiliate not found" });
+      if (googleId) {
+
+         if (googleId.trim() === "") {
+            return res.status(401).json({ Message: "Google id not found." });
          }
+
+         const referrerAffiliateId = aff_id; // get referrer affiliate id
+
+         let referrerAff; // declair referrer affiliate
+
+         if (referrerAffiliateId) {
+            referrerAff = await User.findOne({ // find referrer affiliate
+               userId: referrerAffiliateId
+            });
+            if (!referrerAff) {
+               return res.status(404).json({ Error: "  Refferrer Affiliate not found" });
+            }
+         }
+
+         const isUserExisted = await User.findOne({ googleId: googleId });
+
+         if (!isUserExisted) {
+            // check blank fields
+            const isBlank = [firstName, lastName, email].some(fields => fields.trim() === "");
+
+            if (isBlank) {
+               return res.status(401).json({ Message: "All fields are compulsary" });
+            }
+
+
+            // create affiliate
+            const newUser = new User({
+               firstName,
+               lastName,
+               email,
+               userId: "fa1",
+               referrer: referrerAff ? referrerAff._id : null, // check reffere is existed or not
+               googleId
+            })
+
+            await newUser.save(); // save user
+
+            const count = await Counter.increment('affiliate');
+            const affiliateId = `AF${count}`; // create affiliate id
+            newUser.userId = affiliateId;
+
+            if (referrerAff) {
+               referrerAff.referredUsers.push(newUser._id); // push refered user id in refferer array 
+               await referrerAff.save(); // save referrer user 
+            }
+
+            // save affiliate
+            await newUser.save();
+
+            return res.status(200).json({ Message: "Affiliate has been  sucessfully register.", affiliate: newUser });
+         }
+
+         
+         const payload = {
+            _id: isUserExisted._id,
+            email: isUserExisted.email
+        }
+
+        // generate jwt token
+        const accessToken = generateJWT(payload);
+
+        res.cookie("AccessToken", accessToken);
+
+         return res.status(200).json({ Message: "Affiliate has been  sucessfully Loged in.", affiliate: isUserExisted, token : accessToken });
       }
 
+      return res.status(404).json({ Error: "Google id not found" });
 
-      // check blank fields
-      const isBlank = [firstName, lastName, email, googleId].some(fields => fields.trim() === "");
-
-      if (isBlank) {
-         return res.status(401).json({ Message: "All fields are compulsary" });
-      }
-
-      // check if affiliate is already existed
-      const isUserExisted = await User.findOne({ email: email });
-
-      if (isUserExisted) {
-         return res.status(401).json({ Message: "User is already existed. Please login or choose other user name" });
-      }
-
-      // create affiliate
-      const newUser = new User({
-         firstName,
-         lastName,
-         email,
-         userId : "fa1",
-         referrer: referrerAff ? referrerAff._id : null, // check reffere is existed or not
-         googleId
-      })
-
-      await newUser.save(); // save user
-
-      const count = await Counter.increment('affiliate');
-      const affiliateId = `AF${count}`; // create affiliate id
-      newUser.userId = affiliateId;
-
-      if (referrerAff) {
-         referrerAff.referredUsers.push(newUser._id); // push refered user id in refferer array 
-         await referrerAff.save(); // save referrer user 
-      }
-
-      // save affiliate
-      await newUser.save();
-
-      const user = await User.findOne({ email: newUser.email }); // double  check user
-
-      if (!user) {
-         return res.status(404).json({ Message: "User not found. There is something problem in user data saving" });
-      }
-
-      // return response
-      res.status(200).json({ Message: "Affiliate has been  sucessfully register.", affiliate: user });
    } catch (error) {
       res.status(500).json({ success: false, error: error.message });
    }
 };
+
+// login user
+const loginAffiliate = async (req, res) => {
+   try {
+      const { userName, password } = req.body;
+
+      if (userName.trim() === "" || password.trim() === "") {
+         return res.status(401).json({ Message: "All fields are compulsary" });
+      }
+
+      const user = await User.findOne({ $or: [{ userName }, { email: userName }] });
+
+
+      if (!user) {
+         return res.status(401).json({ Message: "User is not existed." });
+      }
+
+      // compare password
+      const isPasswordCorrect = await comparePassword(password, user.password);
+
+      if (!isPasswordCorrect) {
+         return res.status(401).json({ Message: "Invalid password" });
+      }
+
+      const payload = {
+         _id: user._id,
+         email: user.email
+      }
+
+      // generate jwt token
+      const accessToken = generateJWT(payload);
+
+      res.cookie("AccessToken", accessToken);
+
+      // return response
+      return res.status(200).json({ Message: "Affiliate has been  sucessfully Loged in.", affiliate: user, token: accessToken });
+   } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+   }
+
+}
 
 // generate affiliate link
 const generateAffiliateLink = (req, res) => {
@@ -169,40 +225,41 @@ const generateAffiliateLink = (req, res) => {
    }
 };
 
+// edit affiliate
 const editAffiliate = async (req, res) => {
    try {
 
-       const { firstName, lastName, country } = req.body;
-       const user = req.user._id;
+      const { firstName, lastName, country } = req.body;
+      const user = req.user._id;
 
-       if (!user) {
-           return res.status(500).json({ success: false, message: "Affiliate is not loged in" });
-       }
+      if (!user) {
+         return res.status(500).json({ success: false, message: "Affiliate is not loged in" });
+      }
 
-       let payload = {};
-       if (firstName) {
-           payload.firstName = firstName;
-       }
+      let payload = {};
+      if (firstName) {
+         payload.firstName = firstName;
+      }
 
-       if (lastName) {
-           payload.lastName = lastName;
-       }
+      if (lastName) {
+         payload.lastName = lastName;
+      }
 
-       if (country) {
-           payload.country = country;
-       }
+      if (country) {
+         payload.country = country;
+      }
 
-       const updatedAffiliate = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
+      const updatedAffiliate = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
 
-       if (!updatedAffiliate) {
-           return res.status(400).json({ success: false, message: "Affiliate is not updated" });
-       }
+      if (!updatedAffiliate) {
+         return res.status(400).json({ success: false, message: "Affiliate is not updated" });
+      }
 
-       return res.status(200).json({ success: true, message: "Affiliate is updated", updatedAffiliate });
+      return res.status(200).json({ success: true, message: "Affiliate is updated", updatedAffiliate });
    } catch (error) {
-       res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: error.message });
    }
 
 }
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, editAffiliate };
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate };
