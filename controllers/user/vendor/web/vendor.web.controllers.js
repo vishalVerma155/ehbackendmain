@@ -180,8 +180,8 @@ const loginVendor = async (req, res) => {
 
 
 const editVendor = async (req, res) => {
-    try {
 
+    try {
         const { firstName, lastName, storeName, country } = req.body;
         const user = req.user._id;
 
