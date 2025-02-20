@@ -135,7 +135,8 @@ const editVendor = async (req, res) => {
             return res.status(500).json({ success: false, message: "Vendor is not loged in" });
         }
 
-        let payload;
+        let payload = {};
+
         if (firstName) {
             payload.firstName = firstName;
         }
@@ -152,7 +153,7 @@ const editVendor = async (req, res) => {
             payload.country = country;
         }
 
-        const updatedVendor = await User.findByIdAndUpdate(user, ...payload, { new: true, runValidators: true });
+        const updatedVendor = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
 
         if (!updatedVendor) {
             return res.status(400).json({ success: false, message: "Vendor is not updated" });

@@ -1,7 +1,7 @@
 
 const express = require('express');
 const verifyJWT = require('../../../middleware/authMiddleware.js');
-const {registerAffiliateWithGoogle, generateAffiliateLink, registerAffiliate} = require('../../../controllers/user/affiliate/web/affiliate.web.controllers.js');
+const {registerAffiliateWithGoogle, generateAffiliateLink, registerAffiliate, editAffiliate} = require('../../../controllers/user/affiliate/web/affiliate.web.controllers.js');
 
 
 
@@ -16,6 +16,10 @@ router.post("/registerAffiliateWithGoogle",registerAffiliateWithGoogle);
 
 // generate affiliate link
 router.post("/generateAffiliateLink", generateAffiliateLink);
+
+// edit affiliate
+router.patch("/editAffiliate", verifyJWT, editAffiliate);
+
 
 
 

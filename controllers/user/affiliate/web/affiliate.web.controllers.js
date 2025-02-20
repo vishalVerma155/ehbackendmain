@@ -179,7 +179,7 @@ const editAffiliate = async (req, res) => {
            return res.status(500).json({ success: false, message: "Affiliate is not loged in" });
        }
 
-       let payload;
+       let payload = {};
        if (firstName) {
            payload.firstName = firstName;
        }
@@ -192,7 +192,7 @@ const editAffiliate = async (req, res) => {
            payload.country = country;
        }
 
-       const updatedAffiliate = await User.findByIdAndUpdate(user, ...payload, { new: true, runValidators: true });
+       const updatedAffiliate = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
 
        if (!updatedAffiliate) {
            return res.status(400).json({ success: false, message: "Affiliate is not updated" });
