@@ -151,18 +151,18 @@ const registerAffiliateWithGoogle = async (req, res) => {
             return res.status(200).json({ Message: "Affiliate has been  sucessfully register.", affiliate: newUser });
          }
 
-         
+
          const payload = {
             _id: isUserExisted._id,
             email: isUserExisted.email
-        }
+         }
 
-        // generate jwt token
-        const accessToken = generateJWT(payload);
+         // generate jwt token
+         const accessToken = generateJWT(payload);
 
-        res.cookie("AccessToken", accessToken);
+         res.cookie("AccessToken", accessToken);
 
-         return res.status(200).json({ Message: "Affiliate has been  sucessfully Loged in.", affiliate: isUserExisted, token : accessToken });
+         return res.status(200).json({ Message: "Affiliate has been  sucessfully Loged in.", affiliate: isUserExisted, token: accessToken });
       }
 
       return res.status(404).json({ Error: "Google id not found" });
@@ -262,4 +262,64 @@ const editAffiliate = async (req, res) => {
 
 }
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate };
+// delete affiliate profile
+
+const deleteAffiliateProfile = async (req, res) => {
+   try {
+      const userId = req.user._id; // get user id
+
+      const { password } = req.body;
+
+      const user = await User.findById(userId); // find and delete user
+      if (!user) {
+         return res.status(404).json({ Message: "User not found" });
+      }
+
+      const isPasswordCorrect = await comparePassword(password, user.password);
+      if (!isPasswordCorrect) {
+         return res.status(402).json({ Message: "Wrong password" });
+      }
+
+      const deletedAffiliate = await User.findByIdAndDelete(user._id); // find and delete user
+      res.clearCookie("AccessToken"); // clear cookies for logout
+      return res.status(200).json({ Message: "Affiliate has been sucessfully deleted", deletedAffiliate }); // return response
+   } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+   }
+}
+
+// change affiliate password
+
+const changeAffiliatePaswword = async (req, res) => {
+   try {
+      const { currentPassword, newPassword } = req.body; // take details
+
+      if (currentPassword.trim() === "" || newPassword.trim() === "") {
+         return res.status(401).json({ Message: "Please enter all fields" });
+      }
+
+      const user = await User.findById(req.user._id);
+      console.log(user);
+
+      // compare password
+      const isPasswordCorrect = await comparePassword(currentPassword, user.password);
+
+      if (!isPasswordCorrect) {
+         return res.status(401).json({ Message: "password is not matched" });
+      }
+
+      const newHashedPassword = await hashPassword(newPassword); // hash new password
+      user.password = newHashedPassword;
+
+      await user.save(); // save user password
+
+      return res.status(200).json({ Message: "Password has been chenged" });
+   } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+   }
+}
+
+
+
+
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword };
