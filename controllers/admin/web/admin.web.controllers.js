@@ -2,6 +2,7 @@ const Admin = require('../../../models/admin/web/admin.model.js');
 const User = require('../../../models/user/web/user.model.js');
 const { hashPassword, comparePassword } = require('../../../utils/bcrypt.js');
 const generateJWT = require('../../../utils/jwt.js');
+const mongoose = require('mongoose');
 
 const registerAdmin = async (req, res) => {
     try {
@@ -122,4 +123,82 @@ const searchUser = async (req, res) =>{
     }
 }
 
-module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, editAdmin };
+const getAffiliateTree = async(req, res) =>{
+    try {
+        const userId = req.params.userId;
+
+        const affiliateTree = await User.aggregate([
+            {
+                $match: { _id: new mongoose.Types.ObjectId(userId) } // Find the root user
+            },
+            {
+                $graphLookup: {
+                    from: "users",           // Collection to search (same collection)
+                    startWith: "$_id",       // Start from the given user ID
+                    connectFromField: "_id", // The field in 'users' that should be matched
+                    connectToField: "referrer", // The field in 'users' referring to another user
+                    as: "referrals",        // Store results in 'referrals' array
+                    depthField: "depth"     // Stores the depth level of each referral
+                }
+            },
+            {
+                $project: {
+                    firstName: 1,
+                    lastName: 1,
+                    email: 1,
+                    referrals: {
+                        _id: 1,
+                        firstName: 1,
+                        lastName: 1,
+                        email: 1,
+                        referrer: 1
+                    }
+                }
+            }
+        ]);
+
+        console.log(JSON.stringify(affiliateTree));
+
+        if (!affiliateTree.length) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Convert the flat array into a hierarchical tree
+        const structuredTree = buildAffiliateTree(affiliateTree[0]);
+
+        res.json(structuredTree); // Return structured tree
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Server error" });
+    }
+
+
+}
+
+// Function to build a nested affiliate tree
+function buildAffiliateTree(user) {
+    const userMap = new Map(); // Map to store users by _id
+
+    // Add the root user to the map
+    userMap.set(user._id.toString(), { ...user, referrals: [] });
+
+    // Map all referrals
+    user.referrals.forEach(referral => {
+        userMap.set(referral._id.toString(), { ...referral, referrals: [] });
+    });
+
+    // Assign each referral to its correct parent
+    user.referrals.forEach(referral => {
+        if (referral.referrer) {
+            const parent = userMap.get(referral.referrer.toString());
+            if (parent) {
+                parent.referrals.push(userMap.get(referral._id.toString()));
+            }
+        }
+    });
+
+    // Return the root user with a nested structure
+    return userMap.get(user._id.toString());
+}
+
+module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, editAdmin, getAffiliateTree };
