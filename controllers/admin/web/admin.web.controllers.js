@@ -138,7 +138,8 @@ const getAffiliateTree = async(req, res) =>{
                     connectFromField: "_id", // The field in 'users' that should be matched
                     connectToField: "referrer", // The field in 'users' referring to another user
                     as: "referrals",        // Store results in 'referrals' array
-                    depthField: "depth"     // Stores the depth level of each referral
+                    depthField: "depth",     // Stores the depth level of each referral
+                    
                 }
             },
             {
@@ -187,6 +188,8 @@ function buildAffiliateTree(user) {
         userMap.set(referral._id.toString(), { ...referral, referrals: [] });
     });
 
+
+
     // Assign each referral to its correct parent
     user.referrals.forEach(referral => {
         if (referral.referrer) {
@@ -198,7 +201,7 @@ function buildAffiliateTree(user) {
     });
 
     // Return the root user with a nested structure
-    return userMap.get(user._id.toString());
+    return  userMap.get(user._id.toString());
 }
 
 module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, editAdmin, getAffiliateTree };
