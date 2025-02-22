@@ -5,7 +5,9 @@ const cors = require('cors');
 
 const affiliateRouter = require('./routes/affiliate/web/affiliate.web.routes.js');
 const adminRouter = require('./routes/admin/admin.routes.js');
-const vendorRouter = require('./routes/vendor/web/vendor.web.routes.js')
+const vendorRouter = require('./routes/vendor/web/vendor.web.routes.js');
+const bankRouter = require('./routes/bankDetails/bankDetails.routes.js');
+const upiRouter = require('./routes/bankDetails/upi.routes.js');
 
 // Load config from env file
 require("dotenv").config();
@@ -23,6 +25,8 @@ const dbconnect = require('./config/database.js');
 app.use("/affiliate", affiliateRouter);
 app.use("/admin", adminRouter);
 app.use("/vendor", vendorRouter);
+app.use("/bank", bankRouter);
+app.use("/upi", upiRouter);
 
 
 // Start the server
