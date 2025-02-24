@@ -13,12 +13,10 @@ const groupSchema = new mongoose.Schema({
     groupImage: {
         type: String, // Store image URL (or use Buffer for file storage)
     },
-    usersList: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User" // References the User model
-        }
-    ],
+    totalUsers: {
+        type : Number,
+        default : 0
+    }
 }, { timestamps: true }); // Adds createdAt & updatedAt fields
 
 const Group = mongoose.model("Group", groupSchema);

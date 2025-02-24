@@ -13,9 +13,9 @@ router.post("/registerUpiDetails", verifyJWT, registerUpiId);
 router.get("/getAllUpiDetails", verifyJWT, getAllUpiId);
 
 // get single account
-router.get("/getUpiDetails/:accountId", verifyJWT, getSingleUpiId);
+router.get("/getUpiDetails/:upiId", verifyJWT, getSingleUpiId);
 
 // delete bank detail
-router.delete("/deleteUpiDetail/:accountId", verifyJWT, deleteUpiId);
+router.delete("/deleteUpiDetail/:upiId", verifyJWT, deleteUpiId);
 
 module.exports = router;

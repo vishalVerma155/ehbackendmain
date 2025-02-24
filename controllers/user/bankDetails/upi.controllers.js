@@ -83,7 +83,7 @@ const getSingleUpiId = async (req, res) => {
         if (!upi) {
             return res.status(404).json({ success: false, error: "Upi id not found" });
         }
-        return res.status(200).json({ success: true, upiId });
+        return res.status(200).json({ success: true, upi });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
