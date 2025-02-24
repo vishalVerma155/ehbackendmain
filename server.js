@@ -8,6 +8,7 @@ const adminRouter = require('./routes/admin/admin.routes.js');
 const vendorRouter = require('./routes/vendor/web/vendor.web.routes.js');
 const bankRouter = require('./routes/bankDetails/bankDetails.routes.js');
 const upiRouter = require('./routes/bankDetails/upi.routes.js');
+const groupRouter = require('./routes/admin/group/group.routes.js')
 
 // Load config from env file
 require("dotenv").config();
@@ -27,6 +28,7 @@ app.use("/admin", adminRouter);
 app.use("/vendor", vendorRouter);
 app.use("/bank", bankRouter);
 app.use("/upi", upiRouter);
+app.use("/admin/group", groupRouter);
 
 
 // Start the server
