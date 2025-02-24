@@ -2,6 +2,7 @@ const User = require('../../../../models/user/web/user.model.js');
 const Counter = require('../../../../models/user/countModel/affiliateCount.model.js');
 const generateJWT = require('../../../../utils/jwt.js');
 const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js');
+const Settings = require('../../../../models/admin/settings/settings.model.js')
 
 // register affiliate with email id and password
 const registerAffiliate = async (req, res) => {
@@ -46,6 +47,9 @@ const registerAffiliate = async (req, res) => {
       }
 
       const hashedPassword = await hashPassword(password);
+      const settings = await Settings.findOne();
+      const defaultGroup = settings ? settings.defaultGroup : "prime";
+
       // create affiliate
       const newUser = new User({
          firstName,
@@ -56,7 +60,8 @@ const registerAffiliate = async (req, res) => {
          country: country ? country : "India",
          userId: "fa1",
          referrer: referrerAff ? referrerAff._id : null,
-         password: hashedPassword
+         password: hashedPassword,
+         groups : defaultGroup
       })
 
       await newUser.save(); // save user
@@ -123,6 +128,8 @@ const registerAffiliateWithGoogle = async (req, res) => {
                return res.status(401).json({ Message: "All fields are compulsary" });
             }
 
+            const settings = await Settings.findOne();
+            const defaultGroup = settings ? settings.defaultGroup : "prime";
 
             // create affiliate
             const newUser = new User({
@@ -131,7 +138,8 @@ const registerAffiliateWithGoogle = async (req, res) => {
                email,
                userId: "fa1",
                referrer: referrerAff ? referrerAff._id : null, // check reffere is existed or not
-               googleId
+               googleId,
+               groups : defaultGroup
             })
 
             await newUser.save(); // save user

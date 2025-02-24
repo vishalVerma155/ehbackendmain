@@ -60,8 +60,7 @@ const userSchema = new mongoose.Schema({
         unique: true
     },
     groups: {
-        type: String,
-        default : "prime"
+        type: String
     },
     role: {
         type: String,

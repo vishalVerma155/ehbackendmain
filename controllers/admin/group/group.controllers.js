@@ -104,4 +104,4 @@ const deleteGroup = async (req, res) => {
 
 const setDefaultGroup = () => { }
 
-module.exports = { addGroup, getGroupInfo, deleteGroup };
+module.exports = { addGroup, getGroupInfo, deleteGroup, addUserGroup };
