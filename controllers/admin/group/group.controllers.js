@@ -126,7 +126,7 @@ const setDefaultGroup = async (req, res) => {
         settings.defaultGroup = groupName;
         await settings.save();
 
-        return res.status(200).json({ success: true, updatedDefaultGroup: settings.defaultGroup });
+        return res.status(200).json({ success: true, updatedDefaultGroup: settings });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
