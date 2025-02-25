@@ -1,5 +1,6 @@
 const Group = require('../../../models/admin/group/group.model.js');
-const Users = require('../../../models/user/web/user.model.js')
+const Users = require('../../../models/user/web/user.model.js');
+const Settings = require('../../../models/admin/settings/settings.model.js')
 
 const addGroup = async (req, res) => {
     try {
@@ -44,10 +45,6 @@ const getGroupInfo = async (req, res) => {
         }
 
         const groupMemberCount = await Users.countDocuments({ groups: groupName });
-
-        if (!groupMemberCount) {
-            return res.status(404).json({ success: false, error: "No group member found" });
-        }
 
         group.totalUsers = groupMemberCount;
         await group.save();
@@ -102,6 +99,49 @@ const deleteGroup = async (req, res) => {
 
 }
 
-const setDefaultGroup = () => { }
+const setDefaultGroup = async (req, res) => {
+    try {
 
-module.exports = { addGroup, getGroupInfo, deleteGroup, addUserGroup };
+        const { groupName } = req.body;
+
+        if (!groupName) {
+            return res.status(404).json({ success: false, error: "Group name not found." });
+        }
+
+        const settings = await Settings.findOne();
+
+        if (!settings) {
+            const defGroup = new Settings({
+                defaultGroup: groupName
+            })
+            await defGroup.save();
+
+            if (!defGroup) {
+                return res.status(500).json({ success: false, error: "Error in setting the default group" });
+            }
+
+            return res.status(200).json({ success: true, defGroup });
+        }
+
+        settings.defaultGroup = groupName;
+        await settings.save();
+
+        return res.status(200).json({ success: true, updatedDefaultGroup: settings.defaultGroup });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+
+}
+
+
+const getAllGroups = async (req, res) => {
+    try {
+        const groups = await Group.find();
+        return res.status(200).json({ success: true, groups });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+
+}
+
+module.exports = { addGroup, getGroupInfo, deleteGroup, addUserGroup, setDefaultGroup, getAllGroups };
