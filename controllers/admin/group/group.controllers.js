@@ -144,4 +144,8 @@ const getAllGroups = async (req, res) => {
 
 }
 
+const editGroup = (req, res) =>{
+    const groupId = req.params.groupId;
+}
+
 module.exports = { addGroup, getGroupInfo, deleteGroup, addUserGroup, setDefaultGroup, getAllGroups };

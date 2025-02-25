@@ -3,6 +3,7 @@ const User = require('../../../models/user/web/user.model.js');
 const { hashPassword, comparePassword } = require('../../../utils/bcrypt.js');
 const generateJWT = require('../../../utils/jwt.js');
 const mongoose = require('mongoose');
+const axios = require('axios');
 
 const registerAdmin = async (req, res) => {
     try {
@@ -203,5 +204,8 @@ function buildAffiliateTree(user) {
     // Return the root user with a nested structure
     return  userMap.get(user._id.toString());
 }
+
+// auto login in any user account
+const autoLogin = (req, res) =>{};
 
 module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, editAdmin, getAffiliateTree };
