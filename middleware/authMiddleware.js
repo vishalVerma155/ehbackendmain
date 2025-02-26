@@ -13,7 +13,6 @@ const verifyJWT = (req, res, next) => {
         if (req.cookies.admin_jwt) {
             req.user.impersonatedByAdmin = true;
         }
-        
         next()
     });
 }

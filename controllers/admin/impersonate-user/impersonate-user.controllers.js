@@ -6,9 +6,10 @@ const createImpersonate = async (req, res) => {
         return res.status(403).json({ message: "Only Admins can impersonate Users." });
     }
 
-    const { userId } = req.body;
+    const { userId, googleId } = req.body;
+  
     try {
-        const user = await User.findById(userId);
+        const user = await User.findOne({ $or: [{ _id: userId }, { googleId: googleId }] });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -32,7 +33,7 @@ const createImpersonate = async (req, res) => {
         });
 
     
-       return res.status(200).json({ message: "Impersonation started", redirectUrl: "/user-dashboard" });
+       return res.status(200).json({ message: "Impersonation started", redirectUrl: " " });
     } catch (error) {
         res.status(500).json({ message: "Server error", error });
     }
@@ -61,3 +62,4 @@ const restoreAdmin = async (req, res) => {
     res.json({ message: "Admin session restored" });
 };
 
+module.exports = {createImpersonate}

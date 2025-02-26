@@ -78,7 +78,8 @@ const loginAdmin = async (req, res) => {
         // generate jwt token
         const accessToken = generateJWT({
             _id: user._id,
-            email: user.email
+            email: user.email,
+            role : user.role
         });
 
         res.cookie("AccessToken", accessToken); // set jwt token in cookies
