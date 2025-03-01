@@ -327,7 +327,39 @@ const changeAffiliatePaswword = async (req, res) => {
    }
 }
 
+const distributeCommision = async (req, res) =>{
+
+   try {
+
+      const {sellerId, totalAmount} = req.body;
+      let commissionAdmin = (22 / 100) * totalAmount; // 22% of total price
+      const levels = [4, 3, 2, 2, 1]; // Commission for each level
+      let currentUser = await User.findOne({ _id: sellerId });
+  
+      let distributedAmount = 0; // Track how much is given
+      let level = 0;
+      let userArr = [];
+      
+  
+      while (currentUser && currentUser.referrer && level < levels.length) {
+          let referrer = await User.findOne({ _id: currentUser.referrer });
+  
+          if (!referrer) break; // Stop if no referrer exists
+          distributedAmount += totalAmount * (levels[level]/100);
+          commissionAdmin -= totalAmount * (levels[level]/100);
+  
+          userArr.push(referrer);
+          currentUser = referrer; // Move up the chain
+          level++; // Increase level
+      }
+  
+      
+      return res.json({Array : userArr, distributedAmount, commissionAdmin});
+   } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+   }
+
+}
 
 
-
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword };
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword, distributeCommision };
