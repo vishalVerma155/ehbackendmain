@@ -136,4 +136,4 @@ const deleteCampaign = async(req, res) =>{
     }
 }
 
-module.exports = { createCampaign, getAllCampaignsForAdmin, getCampainListForVendor, editCampaign, deleteCampaign };
+module.exports = { createCampaign, getAllCampaignsForAdmin, getCampainListForVendor, editCampaign, deleteCampaign, getCampaign };
