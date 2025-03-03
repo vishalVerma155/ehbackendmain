@@ -66,7 +66,7 @@ const editCampaign =async (req, res) =>{
                 return res.status(404).json({ success: false, error: "campaign Id not found" });
             }
     
-            const updatedCampaign = await MarketingProgram.findByIdAndUpdate(campaignId, data,{new : true});
+            const updatedCampaign = await Campaign.findByIdAndUpdate(campaignId, data,{new : true});
         
             if(!updatedCampaign){
                 return res.status(500).json({ success: false, error: "Campaign not found" });
