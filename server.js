@@ -11,7 +11,8 @@ const upiRouter = require('./routes/bankDetails/upi.routes.js');
 const groupRouter = require('./routes/admin/group/group.routes.js');
 const impersonateRouter = require('./routes/admin/impersonateAsUser/impersonate.routes.js');
 const programRouter = require('./routes/vendor/marketTools/program/program.routes.js');
-const campaignRouter = require('./routes/vendor/marketTools/campaign/campaign.routes.js')
+const campaignRouter = require('./routes/vendor/marketTools/campaign/campaign.routes.js');
+const commissionRouter = require('./routes/commission/commission.routes.js')
 
 // Load config from env file
 require("dotenv").config();
@@ -35,6 +36,7 @@ app.use("/admin/group", groupRouter);
 app.use("/admin/impersonate", impersonateRouter);
 app.use("/vendor", programRouter);
 app.use("/vendor", campaignRouter);
+app.use("/commission", commissionRouter);
 
 
 // Start the server

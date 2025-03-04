@@ -35,8 +35,8 @@ const createCampaign = async (req, res) => {
 
         // Populate selectedAffiliates and program
         const populatedCampaign = await Campaign.findById(campaign._id)
-            .populate("selectedAffiliates", "firstName lastName email userId") // Fetch name and email from User model
-            .populate("program", "programName commissionType saleCommission commissionForSale status") // Fetch program details
+            .populate("selectedAffiliates", "firstName lastName email userId") 
+            .populate("program", "programName commissionType saleCommission commissionForSale status") 
             .lean(); // Convert Mongoose document to plain object for better performance
 
         return res.status(200).json({ success: true, populatedCampaign });
