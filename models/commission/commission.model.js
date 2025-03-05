@@ -43,7 +43,8 @@ const commissionSchema = new mongoose.Schema({
     },
     transactionId : {
         type: String,
-        required: true
+        required: 
+        true
     }
 }, { timestamps: true });
 

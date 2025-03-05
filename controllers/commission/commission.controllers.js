@@ -55,4 +55,86 @@ const createCommission = async(req, res) =>{
     }
 }
 
-module.exports = {createCommission};
+const editCommission = async(req, res) =>{
+    try {
+        const {paymentStatus, finalStatus} = req.body;
+        const commId = req.params.commmissionId;
+
+        if(!commId){
+            return res.status(404).json({ success: false, error: "Commission id not found" });
+        }
+
+        if(!paymentStatus && !finalStatus){
+            return res.status(404).json({ success: false, error: "One field is compulsary" });
+        }
+
+        const payload = {};
+
+        if(paymentStatus && paymentStatus.trim() !== ""){
+            payload.paymentStatus = paymentStatus;
+        }
+
+        
+        if(finalStatus && finalStatus.trim() !== ""){
+            payload.finalStatus = finalStatus;
+        }
+
+        const comm = await Commission.findByIdAndUpdate(commId, payload, {new : true});
+
+        if(!comm){
+            return res.status(404).json({ success: false, error: "commission receipt not found" });
+        }
+
+        return res.status(200).json({ success: true, updated_commission : comm });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+const getCommissionGiverWise = async(req, res) =>{
+    try {
+        const giverId = await req.params.giverId;
+
+        if(!giverId){
+            return res.status(404).json({ success: false, error: "Commission giver id not found" });
+        }
+
+        const giverCommission = await Commission.find({giverId});
+
+        return res.status(200).json({ success: true, given_Commission : giverCommission });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+const getCommissionGetterWise = async(req, res) =>{
+    try {
+        const getterId = await req.params.getterId;
+
+        if(!getterId){
+            return res.status(404).json({ success: false, error: "Commission getter Id not found" });
+        }
+
+        const getterCommission = await Commission.find({getterId});
+
+        return res.status(200).json({ success: true, getter_Commission : getterCommission });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+const getAllCommissionForAdmin = async(req, res) =>{
+
+    try {
+
+        const allCommission = await Commission.find().sort({paymentStatus : -1});
+        return res.status(200).json({ success: true,  allCommission });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+module.exports = {createCommission, getCommissionGetterWise, getCommissionGiverWise, getAllCommissionForAdmin, editCommission};
