@@ -137,4 +137,41 @@ const getAllCommissionForAdmin = async(req, res) =>{
     }
 }
 
-module.exports = {createCommission, getCommissionGetterWise, getCommissionGiverWise, getAllCommissionForAdmin, editCommission};
+const commissionFilterApi = async(req, res) =>{
+
+    try {
+        let {integrationType, paymentStatus, startDate, endDate} = req.body;
+
+        const payload = {};
+    
+        if(integrationType && integrationType.trim() !== ""){
+            payload.integrationType = integrationType;
+        }
+    
+        if(paymentStatus && paymentStatus.trim() !== ""){
+            payload.paymentStatus = paymentStatus; 
+        } 
+    
+        if(startDate){
+            startDate = new Date(startDate);
+            endDate = new Date(endDate);
+            endDate.setHours(23, 59, 59, 999);
+
+            if (isNaN(startDate) || isNaN(endDate)) {
+                return res.status(400).json({ success: false, message: "Invalid date format" });
+            }
+    
+            payload.date = {$gte: startDate, $lte: endDate}
+        }
+    
+        const filteredResult = await Commission.find(payload);
+    
+        return res.status(200).json({ success: true, filteredResult : filteredResult.length > 0 ? filteredResult : "No result found" });
+        
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+    
+}
+
+module.exports = {createCommission, getCommissionGetterWise, getCommissionGiverWise, getAllCommissionForAdmin, editCommission, commissionFilterApi};

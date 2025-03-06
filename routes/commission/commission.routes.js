@@ -1,6 +1,6 @@
 const verifyJWT = require('../../middleware/authMiddleware.js');
 const express = require('express');
-const {createCommission, getAllCommissionForAdmin, getCommissionGetterWise, getCommissionGiverWise, editCommission} = require('../../controllers/commission/commission.controllers.js');
+const {createCommission, getAllCommissionForAdmin, getCommissionGetterWise, getCommissionGiverWise, editCommission, commissionFilterApi} = require('../../controllers/commission/commission.controllers.js');
 
 
 
@@ -13,6 +13,8 @@ router.post("/createCommission", createCommission);
 router.get("/getAllCommissionForAdmin", getAllCommissionForAdmin);
 
 router.patch("/editCommission/:commmissionId", editCommission);
+
+router.get("/filterCommission", commissionFilterApi);
 
 
 // // get single account
