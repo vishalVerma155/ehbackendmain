@@ -42,6 +42,10 @@ const querySchema = new mongoose.Schema(
             type: String,
             enum: ["solved", "unsolved"],
             default: "unsolved"
+        },
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "user"
         }
     },
 
