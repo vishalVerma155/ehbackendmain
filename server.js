@@ -12,7 +12,8 @@ const groupRouter = require('./routes/admin/group/group.routes.js');
 const impersonateRouter = require('./routes/admin/impersonateAsUser/impersonate.routes.js');
 const programRouter = require('./routes/vendor/marketTools/program/program.routes.js');
 const campaignRouter = require('./routes/vendor/marketTools/campaign/campaign.routes.js');
-const commissionRouter = require('./routes/commission/commission.routes.js')
+const commissionRouter = require('./routes/commission/commission.routes.js');
+const queryRouter = require('./routes/contectToAdmin/query.routes.js');
 
 // Load config from env file
 require("dotenv").config();
@@ -37,6 +38,8 @@ app.use("/admin/impersonate", impersonateRouter);
 app.use("/vendor", programRouter);
 app.use("/vendor", campaignRouter);
 app.use("/commission", commissionRouter);
+app.use('/contectAdmin', queryRouter);
+
 
 
 // Start the server
