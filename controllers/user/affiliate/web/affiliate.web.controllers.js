@@ -156,13 +156,26 @@ const registerAffiliateWithGoogle = async (req, res) => {
             // save affiliate
             await newUser.save();
 
-            return res.status(200).json({ Message: "Affiliate has been  sucessfully register.", affiliate: newUser });
+            
+         const payload = {
+            _id: newUser._id,
+            email: newUser.email,
+            role : newUser.role
+         }
+
+         // generate jwt token
+         const accessToken = generateJWT(payload);
+
+         res.cookie("AccessToken", accessToken);
+
+            return res.status(200).json({ Message: "Affiliate has been  sucessfully register.", affiliate: newUser, accessToken });
          }
 
 
          const payload = {
             _id: isUserExisted._id,
-            email: isUserExisted.email
+            email: isUserExisted.email,
+            role : isUserExisted.role
          }
 
          // generate jwt token

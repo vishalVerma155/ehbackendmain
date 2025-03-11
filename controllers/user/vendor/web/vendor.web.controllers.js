@@ -67,7 +67,7 @@ const registerVendor = async (req, res) => {
         const payload = {
             _id: user._id,
             email: user.email,
-            role : user.role
+            role: user.role
         }
 
         // generate jwt token
@@ -112,7 +112,8 @@ const registerVendorWithGoogle = async (req, res) => {
                     lastName,
                     email,
                     userId: "fa1",
-                    googleId
+                    googleId,
+                    role: "vendor"
                 })
 
                 await newUser.save(); // save user
@@ -124,13 +125,26 @@ const registerVendorWithGoogle = async (req, res) => {
                 // save affiliate
                 await newUser.save();
 
-                return res.status(200).json({ Message: "Vendor has been  sucessfully register.", vendor: newUser });
+
+                const payload = {
+                    _id: newUser._id,
+                    email: newUser.email,
+                    role: newUser.role
+                }
+
+                // generate jwt token
+                const accessToken = generateJWT(payload);
+
+                res.cookie("AccessToken", accessToken);
+
+                return res.status(200).json({ Message: "Vendor has been  sucessfully register.", vendor: newUser, accessToken });
             }
 
 
             const payload = {
                 _id: isUserExisted._id,
-                email: isUserExisted.email
+                email: isUserExisted.email,
+                role : isUserExisted.role
             }
 
             // generate jwt token
@@ -139,7 +153,7 @@ const registerVendorWithGoogle = async (req, res) => {
             res.cookie("AccessToken", accessToken);
 
 
-            return res.status(200).json({ Message: "vendor has been  sucessfully Loged in.", vendor: isUserExisted, token : accessToken });
+            return res.status(200).json({ Message: "vendor has been  sucessfully Loged in.", vendor: isUserExisted, token: accessToken });
         }
 
         return res.status(404).json({ Error: "Google id not found" });
@@ -234,55 +248,55 @@ const editVendor = async (req, res) => {
 
 const deleteVendorProfile = async (req, res) => {
     try {
-       const userId = req.user._id; // get user id
-       const { password } = req.body;
-       const user = await User.findById(userId); // find user
-       if (!user) {
-          return res.status(404).json({ Message: "User not found" });
-       }
- 
-       const isPasswordCorrect = await comparePassword(password, user.password);
-       if (!isPasswordCorrect) {
-          return res.status(402).json({ Message: "Wrong password" });
-       }
- 
-       const deletedVendor = await User.findByIdAndDelete(user._id); // find and delete user
- 
-       res.clearCookie("AccessToken"); // clear cookies for logout
-       return res.status(200).json({ Message: "Vendor has been sucessfully deleted", deletedVendor }); // return response
+        const userId = req.user._id; // get user id
+        const { password } = req.body;
+        const user = await User.findById(userId); // find user
+        if (!user) {
+            return res.status(404).json({ Message: "User not found" });
+        }
+
+        const isPasswordCorrect = await comparePassword(password, user.password);
+        if (!isPasswordCorrect) {
+            return res.status(402).json({ Message: "Wrong password" });
+        }
+
+        const deletedVendor = await User.findByIdAndDelete(user._id); // find and delete user
+
+        res.clearCookie("AccessToken"); // clear cookies for logout
+        return res.status(200).json({ Message: "Vendor has been sucessfully deleted", deletedVendor }); // return response
     } catch (error) {
-       return res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ success: false, error: error.message });
     }
- }
- 
- // change Vendor password
- 
- const changeVendorPaswword = async (req, res) => {
+}
+
+// change Vendor password
+
+const changeVendorPaswword = async (req, res) => {
     try {
-       const { currentPassword, newPassword } = req.body; // take details
- 
-       if (currentPassword.trim() === "" || newPassword.trim() === "") {
-          return res.status(401).json({ Message: "Please enter all fields" });
-       }
- 
-       const user = await User.findById(req.user._id);
- 
- 
-       // compare password
-       const isPasswordCorrect = await comparePassword(currentPassword, user.password);
- 
-       if (!isPasswordCorrect) {
-          return res.status(401).json({ Message: "password is not matched" });
-       }
- 
-       const newHashedPassword = await hashPassword(newPassword);
-       user.password = newHashedPassword;
-       await user.save();
- 
-       return res.status(200).json({ Message: "Password has been chenged" });
+        const { currentPassword, newPassword } = req.body; // take details
+
+        if (currentPassword.trim() === "" || newPassword.trim() === "") {
+            return res.status(401).json({ Message: "Please enter all fields" });
+        }
+
+        const user = await User.findById(req.user._id);
+
+
+        // compare password
+        const isPasswordCorrect = await comparePassword(currentPassword, user.password);
+
+        if (!isPasswordCorrect) {
+            return res.status(401).json({ Message: "password is not matched" });
+        }
+
+        const newHashedPassword = await hashPassword(newPassword);
+        user.password = newHashedPassword;
+        await user.save();
+
+        return res.status(200).json({ Message: "Password has been chenged" });
     } catch (error) {
-       return res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ success: false, error: error.message });
     }
- }
+}
 
 module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, deleteVendorProfile, changeVendorPaswword };
