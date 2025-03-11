@@ -63,8 +63,20 @@ const registerVendor = async (req, res) => {
             return res.status(404).json({ Message: "User not found. There is something problem in user data saving" });
         }
 
+        
+        const payload = {
+            _id: user._id,
+            email: user.email,
+            role : user.role
+        }
+
+        // generate jwt token
+        const accessToken = generateJWT(payload);
+
+        res.cookie("AccessToken", accessToken);
+
         // return response
-        res.status(200).json({ Message: "Vendor has been  sucessfully register.", vendor: user });
+        res.status(200).json({ Message: "Vendor has been  sucessfully register.", vendor: user, accessToken });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
