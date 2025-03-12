@@ -7,13 +7,19 @@ const commissionSchema = new mongoose.Schema({
     },
     giverId : {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-        required: true
+        ref: 'user',    
     },
     getterId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user',
-        required: true
+    },
+    getterAdmin: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'admin',
+    },
+    giverAdmin: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'admin',
     },
     type: {
         type: String,

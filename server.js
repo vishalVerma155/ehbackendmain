@@ -14,6 +14,7 @@ const programRouter = require('./routes/vendor/marketTools/program/program.route
 const campaignRouter = require('./routes/vendor/marketTools/campaign/campaign.routes.js');
 const commissionRouter = require('./routes/commission/commission.routes.js');
 const queryRouter = require('./routes/contectToAdmin/query.routes.js');
+const walletRouter = require('./routes/wallet/wallet.routes.js')
 
 // Load config from env file
 require("dotenv").config();
@@ -39,6 +40,7 @@ app.use("/vendor", programRouter);
 app.use("/vendor", campaignRouter);
 app.use("/commission", commissionRouter);
 app.use('/contectAdmin', queryRouter);
+app.use("/wallet", walletRouter);
 
 
 
