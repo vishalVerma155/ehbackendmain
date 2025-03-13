@@ -1,7 +1,6 @@
 const Commission = require('../../models/commission/commission.model.js');
 const User = require('../../models/user/web/user.model.js');
 const Admin = require('../../models/admin/web/admin.model.js');
-const Wallet = require('../../models/wallet/wallet.model.js');
 const axios = require('axios');
 
 const createCommission = async (req, res) => {
@@ -128,7 +127,7 @@ const editCommission = async (req, res) => {
 
             if (comm.type === "commission pay to admin") {
 
-                const response = await axios.post("http://localhost:4500/wallet/addDataToWallet", {
+                const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", {
                     transactionId: "xyz",
                     amount: comm.commission,
                     status: comm.paymentStatus,
@@ -137,12 +136,13 @@ const editCommission = async (req, res) => {
                     getterId: comm.getterAdmin
                 })
 
-                walletRes = response;
+                walletRes = response.data;
+
             }
 
             if (comm.type === "affiliate commission") {
 
-                const response = await axios.post("http://localhost:4500/wallet/addDataToWallet", {
+                const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", {
                     transactionId: "xyz",
                     amount: comm.commission,
                     status: comm.paymentStatus,
@@ -151,9 +151,10 @@ const editCommission = async (req, res) => {
                     getterId: comm.getterId
                 })
 
-                console.log("ENtered in section")
+                console.log("Entered in section")
 
-                walletRes = response;
+                walletRes = response.data;
+
             }
         }
 

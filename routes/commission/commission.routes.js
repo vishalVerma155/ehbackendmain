@@ -10,7 +10,7 @@ const router = express.Router();
 router.post("/createCommission",verifyJWT, createCommission);
 
 // get all bank account
-router.get("/getAllCommissionForAdmin",verifyJWT, getAllCommissionForAdmin);
+router.get("/getAllCommissionForAdmin", getAllCommissionForAdmin);
 
 router.patch("/editCommission/:commmissionId",verifyJWT, editCommission);
 
