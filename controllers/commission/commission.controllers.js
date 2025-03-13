@@ -1,6 +1,8 @@
 const Commission = require('../../models/commission/commission.model.js');
 const User = require('../../models/user/web/user.model.js');
-const Admin = require('../../models/admin/web/admin.model.js')
+const Admin = require('../../models/admin/web/admin.model.js');
+const Wallet = require('../../models/wallet/wallet.model.js');
+const axios = require('axios');
 
 const createCommission = async (req, res) => {
 
@@ -10,38 +12,50 @@ const createCommission = async (req, res) => {
         const isBlank = [type, totalSaleAmount, commissionPercentage, integrationType, transactionId].some((field) => field.trim() === "");
 
         if (isBlank) {
-            return res.status(404).json({ success: false, error: "Giver Id, Getter Id, Type, Total Sale Amount, Commission Percentage, Integration Type, Transaction Id are compulsary" });
+            return res.status(404).json({ success: false, error: " Type, Total Sale Amount, Commission Percentage, Integration Type, Transaction Id are compulsary" });
         }
 
         let { giverId, getterId, giverType } = req.body;
 
         let giver = undefined;
         let getter = undefined;
+        let getterAdmin = undefined;
+        let giverAdmin = undefined;
 
         if (giverType === "vendor") {
             giver = await User.findById(giverId);
-            getter = await Admin.findById(getterId);
+            getterAdmin = await Admin.findById(getterId);
+
+            if (!giver) {
+                return res.status(404).json({ success: false, error: "Commission giver not found" });
+            }
+
+            if (!getterAdmin) {
+                return res.status(404).json({ success: false, error: "Commission getter admin not found" });
+            }
         }
 
         if (giverType === "admin") {
-            giver = await Admin.findById(giverId);
+            giverAdmin = await Admin.findById(giverId);
             getter = await User.findById(getterId);
+
+            if (!giverAdmin) {
+                return res.status(404).json({ success: false, error: "Commission giver admin not found" });
+            }
+
+            if (!getter) {
+                return res.status(404).json({ success: false, error: "Commission getter not found" });
+            }
         }
 
-
-        if (!giver) {
-            return res.status(404).json({ success: false, error: "Commission giver not found" });
-        }
-
-        if (!getter) {
-            return res.status(404).json({ success: false, error: "Commission getter not found" });
-        }
 
         const commission = totalSaleAmount * (commissionPercentage / 100);
 
         const commissionReceipt = new Commission({
-            getterId,
-            giverId,
+            getterId: getter ? getter : undefined,
+            giverId: giver ? giver : undefined,
+            giverAdmin: giverAdmin ? giverAdmin : undefined,
+            getterAdmin: getterAdmin ? getterAdmin : undefined,
             type,
             totalSaleAmount,
             commission,
@@ -59,17 +73,17 @@ const createCommission = async (req, res) => {
         let populatedCommissionReceipt = undefined;
 
         if (giverType === "vendor") {
-          populatedCommissionReceipt =  await Commission.findById(commissionReceipt._id)
+            populatedCommissionReceipt = await Commission.findById(commissionReceipt._id)
                 .populate("giverId", "firstName lastName email userId role")
-                .populate("getterId", "fullName email userId role")
+                .populate("getterAdmin", "fullName email userId role")
                 .lean(); // Convert Mongoose document to plain object for better performance
         }
 
-        if(giverType === "admin"){
-            populatedCommissionReceipt =  await Commission.findById(commissionReceipt._id)
-            .populate("getterId", "firstName lastName email userId role")
-            .populate("giverId", "fullName email userId role")
-            .lean(); // Convert Mongoose document to plain object for better performance
+        if (giverType === "admin") {
+            populatedCommissionReceipt = await Commission.findById(commissionReceipt._id)
+                .populate("getterId", "firstName lastName email userId role")
+                .populate("giverAdmin", "fullName email userId role")
+                .lean(); // Convert Mongoose document to plain object for better performance
         }
 
         return res.status(200).json({ success: true, populatedCommissionReceipt });
@@ -108,7 +122,42 @@ const editCommission = async (req, res) => {
             return res.status(404).json({ success: false, error: "commission receipt not found" });
         }
 
-        return res.status(200).json({ success: true, updated_commission: comm });
+        let walletRes = undefined;
+
+        if (comm.paymentStatus === "paid") {
+
+            if (comm.type === "commission pay to admin") {
+
+                const response = await axios.post("http://localhost:4500/wallet/addDataToWallet", {
+                    transactionId: "xyz",
+                    amount: comm.commission,
+                    status: comm.paymentStatus,
+                    commissionReceipt: comm._id,
+                    giverId: comm.giverId,
+                    getterId: comm.getterAdmin
+                })
+
+                walletRes = response;
+            }
+
+            if (comm.type === "affiliate commission") {
+
+                const response = await axios.post("http://localhost:4500/wallet/addDataToWallet", {
+                    transactionId: "xyz",
+                    amount: comm.commission,
+                    status: comm.paymentStatus,
+                    commissionReceipt: comm._id,
+                    giverId: comm.giverAdmin,
+                    getterId: comm.getterId
+                })
+
+                console.log("ENtered in section")
+
+                walletRes = response;
+            }
+        }
+
+        return res.status(200).json({ success: true, updated_commission: comm, walletRes });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }

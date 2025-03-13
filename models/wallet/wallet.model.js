@@ -15,8 +15,7 @@ const walletSchema = new mongoose.Schema({
         {
             transactionId: {
                 type: String,
-                required: true,
-                unique: true
+                required: true
             },
             type: {
                 type: String,

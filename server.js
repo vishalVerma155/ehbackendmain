@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 4000;
 // Middleware to parse JSON requests
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
+app.use(cors({origin : "*"}));
 
 // DB connection
 const dbconnect = require('./config/database.js');
