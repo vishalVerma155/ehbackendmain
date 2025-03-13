@@ -123,6 +123,15 @@ const editCommission = async (req, res) => {
 
         let walletRes = undefined;
 
+        const pa = {
+            transactionId: "xyz",
+            amount: comm.commission,
+            status: comm.paymentStatus,
+            commissionReceipt: comm._id,
+            giverId: comm.giverAdmin,
+            getterId: comm.getterId
+        }
+
         if (comm.paymentStatus === "paid") {
 
             if (comm.type === "commission pay to admin") {
@@ -142,7 +151,7 @@ const editCommission = async (req, res) => {
 
             if (comm.type === "affiliate commission") {
 
-                const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", {
+                const response = await axios.post("http://localhost:4500/wallet/addDataToWallet", {
                     transactionId: "xyz",
                     amount: comm.commission,
                     status: comm.paymentStatus,

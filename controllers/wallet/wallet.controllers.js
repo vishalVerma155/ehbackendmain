@@ -37,13 +37,13 @@ const createOrGetWallet = async (req, res) => {
 const addTranstionData = async (req, res) => {
     try {
         const { transactionId, amount, status, commissionReceipt, giverId, getterId } = req.body;
-
-        const isBlank = [transactionId, amount, status, commissionReceipt].some((field) => field.trim() === "");
+        
+        const isBlank = [transactionId, String(amount) , status, commissionReceipt].some((field) => field.trim() === "");
 
         if (isBlank) {
             return res.status(404).json({ success: false, error: "transactionId, type, amount, status, commission receipt are compulsary " });
         }
-
+        
         const getterWallet = await Wallet.findOne({ userId: getterId });
 
         if (!getterWallet) {
@@ -77,7 +77,6 @@ const addTranstionData = async (req, res) => {
         giverWallet.transactions.push(giverPayload);
         await giverWallet.save();
 
-
         const getterPayload = {
             transactionId,
             type: "commission_received",
@@ -94,8 +93,9 @@ const addTranstionData = async (req, res) => {
                 commissionReceipt
             }
         }
-
-        getterWallet.balance += amount;
+        
+      
+        getterWallet.balance +=  Number(amount);
         getterWallet.transactions.push(getterPayload);
         await getterWallet.save();
 
