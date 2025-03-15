@@ -123,15 +123,6 @@ const editCommission = async (req, res) => {
 
         let walletRes = undefined;
 
-        const pa = {
-            transactionId: "xyz",
-            amount: comm.commission,
-            status: comm.paymentStatus,
-            commissionReceipt: comm._id,
-            giverId: comm.giverAdmin,
-            getterId: comm.getterId
-        }
-
         if (comm.paymentStatus === "paid") {
 
             if (comm.type === "commission pay to admin") {

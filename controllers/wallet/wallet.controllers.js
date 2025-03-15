@@ -73,7 +73,7 @@ const addTranstionData = async (req, res) => {
             }
         }
 
-        giverWallet.balance -= amount;
+        giverWallet.balance -= Number(amount);
         giverWallet.transactions.push(giverPayload);
         await giverWallet.save();
 

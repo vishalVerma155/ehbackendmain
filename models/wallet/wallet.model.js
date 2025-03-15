@@ -47,6 +47,10 @@ const walletSchema = new mongoose.Schema({
                     type: mongoose.Schema.Types.ObjectId,
                     ref: "Commission",
                 },
+                depositReceipt: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "PaymentDepositReceipt",
+                },
             },
             createdAt: { type: Date, default: Date.now },
         },
