@@ -276,7 +276,7 @@ const deleteVendorProfile = async (req, res) => {
 
 // change Vendor password
 
-const changeVendorPaswword = async (req, res) => {
+const changeVendorPassword = async (req, res) => {
     try {
         const userId = req.user._id;
 
@@ -313,4 +313,4 @@ const changeVendorPaswword = async (req, res) => {
     }
 }
 
-module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, deleteVendorProfile, changeVendorPaswword };
+module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, deleteVendorProfile, changeVendorPassword };
