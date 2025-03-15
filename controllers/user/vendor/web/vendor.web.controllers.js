@@ -249,21 +249,26 @@ const editVendor = async (req, res) => {
 const deleteVendorProfile = async (req, res) => {
     try {
         const userId = req.user._id; // get user id
+
+        if (!userId) {
+            return res.status(404).json({success: false, error: "User id not found" });
+        }
+
         const { password } = req.body;
         const user = await User.findById(userId); // find user
         if (!user) {
-            return res.status(404).json({ Message: "User not found" });
+            return res.status(404).json({success: false, error: "User not found" });
         }
 
         const isPasswordCorrect = await comparePassword(password, user.password);
         if (!isPasswordCorrect) {
-            return res.status(402).json({ Message: "Wrong password" });
+            return res.status(402).json({success: false, error: "Wrong password" });
         }
 
         const deletedVendor = await User.findByIdAndDelete(user._id); // find and delete user
 
         res.clearCookie("AccessToken"); // clear cookies for logout
-        return res.status(200).json({ Message: "Vendor has been sucessfully deleted", deletedVendor }); // return response
+        return res.status(200).json({success: true, Message: "Vendor has been sucessfully deleted", deletedVendor }); // return response
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
