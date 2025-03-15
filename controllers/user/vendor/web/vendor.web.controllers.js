@@ -273,27 +273,36 @@ const deleteVendorProfile = async (req, res) => {
 
 const changeVendorPaswword = async (req, res) => {
     try {
-        const { currentPassword, newPassword } = req.body; // take details
+        const userId = req.user._id;
 
-        if (currentPassword.trim() === "" || newPassword.trim() === "") {
-            return res.status(401).json({ Message: "Please enter all fields" });
+        if (userId && userId.trim() === "") {
+            return res.status(404).json({ success: false, error: "Vendor is not loged in" });
         }
 
-        const user = await User.findById(req.user._id);
+        const { currentPassword, newPassword } = req.body; // take details
 
+        if (currentPassword && currentPassword.trim() === "" || newPassword && newPassword.trim() === "") {
+            return res.status(401).json({ success: false, error: "Please enter all fields" });
+        }
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ success: false, error: "User not found." });
+        }
 
         // compare password
         const isPasswordCorrect = await comparePassword(currentPassword, user.password);
 
         if (!isPasswordCorrect) {
-            return res.status(401).json({ Message: "password is not matched" });
+            return res.status(401).json({ success: false, error: "password is not matched" });
         }
 
         const newHashedPassword = await hashPassword(newPassword);
         user.password = newHashedPassword;
         await user.save();
 
-        return res.status(200).json({ Message: "Password has been chenged" });
+        return res.status(200).json({ success: true, message: "Password has been chenged" });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }

@@ -64,8 +64,6 @@ const createDepositReceipt = async (req, res) => {
         wallet.transactions.push(payload);
         await wallet.save();
 
-
-
         let populatedDepositReceipt = undefined;
 
         if (paymentMethod === "upi") {
@@ -89,4 +87,45 @@ const createDepositReceipt = async (req, res) => {
     }
 }
 
-module.exports = { createDepositReceipt };
+const getAllReceiptForAdmin = async(req, res) =>{
+    try {
+        const all_Receipts = await PaymentDepositReceipt.find();
+        return res.status(200).json({ success: true, All_Deposit_Receipts : all_Receipts });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message }); 
+    }
+}
+
+const getAllReceiptCurrentUser = async(req, res) =>{
+    try {
+        const currUser = req.user._id;
+
+        if (currUser && currUser.trim() === "") {
+            return res.status(404).json({ success: false, error: "Vendor is not loged in" });
+        }
+
+        const all_receipts = await PaymentDepositReceipt.find({userId : currUser});
+        return res.status(200).json({ success: true, All_Deposit_Receipts : all_receipts });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message }); 
+    }
+}
+
+const getDepositReceipt = async(req, res) =>{
+    const transactionId = req.params.transactionId;
+    
+    if(!transactionId){
+        return res.status(404).json({ success: false, error: "Transaction id not found." });
+    }
+
+    const receipt = await PaymentDepositReceipt.find({transactionId});
+
+    if(!receipt){
+        return res.status(404).json({ success: false, error: "Receipt not found" });
+    }
+
+    return res.status(200).json({ success: true, All_Deposit_Receipts : all_receipts });
+}
+
+module.exports = { createDepositReceipt, getAllReceiptCurrentUser, getAllReceiptForAdmin };
