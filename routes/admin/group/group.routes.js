@@ -24,9 +24,5 @@ router.post("/makeDefaultGroup", verifyJWT, setDefaultGroup);
 router.get("/getAllGroups", verifyJWT, getAllGroups);
 
 
-
-
-
-
 module.exports = router;
 

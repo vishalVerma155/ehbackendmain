@@ -79,7 +79,7 @@ const loginAdmin = async (req, res) => {
         const accessToken = generateJWT({
             _id: user._id,
             email: user.email,
-            role : user.role
+            role: user.role
         });
 
         res.cookie("AccessToken", accessToken); // set jwt token in cookies
@@ -91,7 +91,7 @@ const loginAdmin = async (req, res) => {
     }
 };
 
-const editAdmin = async(req, res) =>{
+const editAdmin = async (req, res) => {
     const data = req.body;
     console.log(data);
     res.status(200).json({ Message: "Admin has been  sucessfully Loged in.", Admin: data });
@@ -102,30 +102,30 @@ const getAllUsersList = async (req, res) => {
     try {
 
         let all_Users_List;
-        const {userType} = req.body;
-        if(!userType){
+        const { userType } = req.body;
+        if (!userType) {
             all_Users_List = await User.find();
-           return res.status(200).json({ Message: `All users has been successfully fetched.`, users : all_Users_List });
+            return res.status(200).json({ Message: `All users has been successfully fetched.`, users: all_Users_List });
         }
         all_Users_List = await User.find({ role: userType });
-        return res.status(200).json({ Message: `${userType} has been successfully fetched.`, users : all_Users_List });
+        return res.status(200).json({ Message: `${userType} has been successfully fetched.`, users: all_Users_List });
 
     } catch (error) {
         return res.status(400).json({ Error: error.message });
     }
 }
 
-const searchUser = async (req, res) =>{
+const searchUser = async (req, res) => {
     try {
-    const body = req.body;
-    const user = await User.findOne(body);
-    return res.status(200).json({ Message: `User has been successfully fetched.`, user });
+        const body = req.body;
+        const user = await User.findOne(body);
+        return res.status(200).json({ Message: `User has been successfully fetched.`, user });
     } catch (error) {
         return res.status(400).json({ Error: error.message });
     }
 }
 
-const getAffiliateTree = async(req, res) =>{
+const getAffiliateTree = async (req, res) => {
     try {
         const userId = req.params.userId;
 
@@ -141,7 +141,7 @@ const getAffiliateTree = async(req, res) =>{
                     connectToField: "referrer", // The field in 'users' referring to another user
                     as: "referrals",        // Store results in 'referrals' array
                     depthField: "depth",     // Stores the depth level of each referral
-                    
+
                 }
             },
             {
@@ -203,10 +203,10 @@ function buildAffiliateTree(user) {
     });
 
     // Return the root user with a nested structure
-    return  userMap.get(user._id.toString());
+    return userMap.get(user._id.toString());
 }
 
 // auto login in any user account
-const autoLogin = (req, res) =>{};
+const autoLogin = (req, res) => { };
 
 module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, editAdmin, getAffiliateTree };

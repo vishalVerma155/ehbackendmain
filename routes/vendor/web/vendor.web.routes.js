@@ -10,7 +10,6 @@ const router = express.Router();
 // register affiliate with email and password
 router.post("/registerVendor", registerVendor);
 
-
 // affiliate register router with google
 router.post("/registerVendorWithGoogle",registerVendorWithGoogle);
 
