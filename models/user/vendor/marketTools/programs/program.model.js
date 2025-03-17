@@ -55,6 +55,10 @@ const marketingProgramSchema = new mongoose.Schema({
         type: String,
         enum: ["in review", "approved", "denied", "ask to edit"],
         default: "in review",
+    },
+    mlm: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MLMCommission", // Reference to MLM model
     }
 }, { timestamps: true });
 

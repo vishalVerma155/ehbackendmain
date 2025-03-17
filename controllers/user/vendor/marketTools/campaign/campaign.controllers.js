@@ -8,7 +8,7 @@ const createCampaign = async (req, res) => {
 
         const userId = req.user._id;
 
-        if(!userId){
+        if (!userId) {
             return res.status(404).json({ success: false, error: "user id not found" });
         }
 
@@ -35,8 +35,16 @@ const createCampaign = async (req, res) => {
 
         // Populate selectedAffiliates and program
         const populatedCampaign = await Campaign.findById(campaign._id)
-            .populate("selectedAffiliates", "firstName lastName email userId") 
-            .populate("program", "programName commissionType saleCommission commissionForSale status") 
+            .populate("selectedAffiliates", "firstName lastName email userId")
+            .populate({
+                path: "program",
+                select: "programName commissionType saleCommission commissionForSale status mlm",
+                populate: {
+                    path: "mlm", // Populating MLM inside the program
+                    select: "totalMLMLevel totalCommission adminCommission commissions", // Selecting specific fields from MLM    
+                },
+            })
+            // .populate("program", "programName commissionType saleCommission commissionForSale status mlm")
             .lean(); // Convert Mongoose document to plain object for better performance
 
         return res.status(200).json({ success: true, populatedCampaign });
@@ -46,7 +54,7 @@ const createCampaign = async (req, res) => {
 
 }
 
-const getAllCampaignsForAdmin = async(req, res) => {
+const getAllCampaignsForAdmin = async (req, res) => {
     try {
         const campaignsList = await Campaign.find();
         return res.status(200).json({ success: true, campaignsList });
@@ -55,82 +63,93 @@ const getAllCampaignsForAdmin = async(req, res) => {
     }
 }
 
-const editCampaign =async (req, res) =>{
+const editCampaign = async (req, res) => {
 
     try {
         const campaignId = req.params.campaignId;
         const data = req.body;
-      
-        
-            if(!campaignId){
-                return res.status(404).json({ success: false, error: "campaign Id not found" });
-            }
-    
-            const updatedCampaign = await Campaign.findByIdAndUpdate(campaignId, data,{new : true});
-        
-            if(!updatedCampaign){
-                return res.status(500).json({ success: false, error: "Campaign not found" });
-            }
-    
-            return res.status(200).json({ success: true, updatedCampaign });
+
+
+        if (!campaignId) {
+            return res.status(404).json({ success: false, error: "campaign Id not found" });
+        }
+
+        const updatedCampaign = await Campaign.findByIdAndUpdate(campaignId, data, { new: true });
+
+        if (!updatedCampaign) {
+            return res.status(500).json({ success: false, error: "Campaign not found" });
+        }
+
+        return res.status(200).json({ success: true, updatedCampaign });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
 
 }
 
-const getCampainListForVendor = async(req, res) =>{
+const getCampainListForVendor = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        if(!userId){
-        return res.status(404).json({ success: false, error: "User is not loged in" }); 
+        if (!userId) {
+            return res.status(404).json({ success: false, error: "User is not loged in" });
         }
 
-        const campaignList = await Campaign.find({userId});
+        const campaignList = await Campaign.find({ userId });
         return res.status(200).json({ success: true, campaignList });
 
     } catch (error) {
-        return res.status(500).json({ success: false, error: error.message }); 
+        return res.status(500).json({ success: false, error: error.message });
     }
 }
 
-const getCampaign = async (req, res) =>{
+const getCampaign = async (req, res) => {
 
     try {
         const campaignId = req.params.campaignId;
-    
-        if(!campaignId){
+
+        if (!campaignId) {
             return res.status(404).json({ success: false, error: "campaign Id not found" });
         }
-    
-        const campaign = await Campaign.findById(campaignId);
-    
-        if(!campaign){
+
+        const campaign = await Campaign.findById(campaignId)
+            .populate("selectedAffiliates", "firstName lastName email userId")
+            .populate({
+                path: "program",
+                select: "programName commissionType saleCommission commissionForSale status mlm",
+                populate: {
+                    path: "mlm", // Populating MLM inside the program
+                    select: "totalMLMLevel totalCommission adminCommission commissions", // Selecting specific fields from MLM    
+                },
+            })
+            // .populate("program", "programName commissionType saleCommission commissionForSale status mlm")
+            .lean();
+
+        if (!campaign) {
             return res.status(500).json({ success: false, error: "campaign not found" });
         }
-    
+
         return res.status(200).json({ success: true, campaign });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
 };
 
-const deleteCampaign = async(req, res) =>{
+const deleteCampaign = async (req, res) => {
     try {
         const campaignId = req.params.campaignId;
-        
-            if(!campaignId){
-                return res.status(404).json({ success: false, error: "campaign Id not found" });
-            }
-    
-            const deletedCampaign = await Campaign.findByIdAndDelete(campaignId);
-        
-            if(!deleteCampaign){
-                return res.status(500).json({ success: false, error: "campaign not found" });
-            }
-    
-            return res.status(200).json({ success: true, deletedCampaign });
+
+        if (!campaignId) {
+            return res.status(404).json({ success: false, error: "campaign Id not found" });
+        }
+
+        const deletedCampaign = await Campaign.findByIdAndDelete(campaignId);
+
+        if (!deleteCampaign) {
+            return res.status(500).json({ success: false, error: "campaign not found" });
+        }
+
+        return res.status(200).json({ success: true, deletedCampaign });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
