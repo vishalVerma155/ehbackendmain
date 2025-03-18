@@ -106,4 +106,122 @@ const addTranstionData = async (req, res) => {
 
 }
 
-module.exports = { createOrGetWallet, addTranstionData };
+const getLedger = async(req, res) =>{
+    try {
+
+        const userId = req.user._id;
+        const {startDate, endDate, type} = req.body;
+
+        if (!userId) {
+            return res.status(404).json({ success: false, error: "User is not loged in" });
+        }
+
+        const wallet = await Wallet.findOne({userId});
+
+        if(!wallet){
+            return res.status(404).json({ success: false, error: "User wallet not found." });
+        }
+
+        let transactions = wallet.transactions;
+
+        let balance = 0;
+    
+        // Apply Filters (Optional)
+        transactions = transactions
+            .filter(txn => {
+                let txnDate = new Date(txn.createdAt
+                );
+                let inDateRange = true, inType = true;
+                
+                if (startDate && endDate) {
+                    inDateRange = txnDate >= new Date(startDate) && txnDate <= new Date(endDate);
+                }
+                if (type) {
+                    inType = txn.type === type;
+                }
+    
+                return inDateRange && inType;
+            })
+            .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)) // Sort by date
+            .map(txn => {
+                let amount = txn.amount;
+                if (txn.drCr === "DR") balance -= amount;
+                else balance += amount;
+    
+                return {
+                    date: new Date(txn.createdAt).toLocaleString(),
+                    transactionId: txn.transactionId,
+                    type: txn.type.replace("_", " "),
+                    debit: txn.drCr === "DR" ? amount : "-",
+                    credit: txn.drCr === "CR" ? amount : "-",
+                    balance: balance
+                };
+            });
+    
+            return res.status(200).json({ success: true, message: "Ledger has been made", ledger : transactions });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+
+const getLedgerByUserId = async(req, res) =>{
+    try {
+
+        const userId = req.params.userId;
+        const {startDate, endDate, type} = req.body;
+
+        if (!userId) {
+            return res.status(404).json({ success: false, error: "User is not loged in" });
+        }
+
+        const wallet = await Wallet.findOne({userId});
+
+        if(!wallet){
+            return res.status(404).json({ success: false, error: "User wallet not found." });
+        }
+
+        let transactions = wallet.transactions;
+
+        let balance = 0;
+    
+        // Apply Filters (Optional)
+        transactions = transactions
+            .filter(txn => {
+                let txnDate = new Date(txn.createdAt
+                );
+                let inDateRange = true, inType = true;
+                
+                if (startDate && endDate) {
+                    inDateRange = txnDate >= new Date(startDate) && txnDate <= new Date(endDate);
+                }
+                if (type) {
+                    inType = txn.type === type;
+                }
+    
+                return inDateRange && inType;
+            })
+            .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)) // Sort by date
+            .map(txn => {
+                let amount = txn.amount;
+                if (txn.drCr === "DR") balance -= amount;
+                else balance += amount;
+    
+                return {
+                    date: new Date(txn.createdAt).toLocaleString(),
+                    transactionId: txn.transactionId,
+                    type: txn.type.replace("_", " "),
+                    debit: txn.drCr === "DR" ? amount : "-",
+                    credit: txn.drCr === "CR" ? amount : "-",
+                    balance: balance
+                };
+            });
+    
+            return res.status(200).json({ success: true, message: "Ledger has been made", ledger : transactions });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+    
+}
+
+module.exports = { createOrGetWallet, addTranstionData, getLedger };

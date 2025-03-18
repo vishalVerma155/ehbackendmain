@@ -44,7 +44,6 @@ const createCampaign = async (req, res) => {
                     select: "totalMLMLevel totalCommission adminCommission commissions", // Selecting specific fields from MLM    
                 },
             })
-            // .populate("program", "programName commissionType saleCommission commissionForSale status mlm")
             .lean(); // Convert Mongoose document to plain object for better performance
 
         return res.status(200).json({ success: true, populatedCampaign });
