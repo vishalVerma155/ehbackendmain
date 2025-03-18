@@ -224,4 +224,4 @@ const getLedgerByUserId = async(req, res) =>{
     
 }
 
-module.exports = { createOrGetWallet, addTranstionData, getLedger };
+module.exports = { createOrGetWallet, addTranstionData, getLedger, getLedgerByUserId };

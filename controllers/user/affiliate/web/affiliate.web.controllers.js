@@ -2,7 +2,8 @@ const User = require('../../../../models/user/web/user.model.js');
 const Counter = require('../../../../models/user/countModel/affiliateCount.model.js');
 const generateJWT = require('../../../../utils/jwt.js');
 const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js');
-const Settings = require('../../../../models/admin/settings/settings.model.js')
+const Settings = require('../../../../models/admin/settings/settings.model.js');
+const { default: axios } = require('axios');
 
 // register affiliate with email id and password
 const registerAffiliate = async (req, res) => {
@@ -309,6 +310,26 @@ const deleteAffiliateProfile = async (req, res) => {
    }
 }
 
+// get affiliate by affiliate id
+const getUserByUserId = async(req, res) =>{
+   try {
+      const userId = req.params.userId;
+      if(!userId){
+         return res.status(404).json({ success: false, message: "User id  not found." });
+      }
+
+      const user = await User.findOne({userId});
+
+      if(!user){
+         return res.status(404).json({ success: false, message: "User not found." });
+      }
+
+      return res.status(200).json({ success: true, user });
+   } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+   }
+}
+
 // change affiliate password
 
 const changeAffiliatePaswword = async (req, res) => {
@@ -375,4 +396,4 @@ const distributeCommision = async (req, res) =>{
 }
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword, distributeCommision };
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword, distributeCommision, getUserByUserId };
