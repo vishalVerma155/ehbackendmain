@@ -11,7 +11,7 @@ const registerAdmin = async (req, res) => {
         const { fullName, email, password } = req.body;
 
         const isAdminExisted = await Admin.find();
-        console.log(isAdminExisted);
+        
         if (isAdminExisted.length >= 1) {
             return res.status(401).json({ Message: "Admin is already existed. There can be only one admin" })
         }
@@ -207,6 +207,6 @@ function buildAffiliateTree(user) {
 }
 
 // auto login in any user account
-const autoLogin = (req, res) => { };
+const autoLogin = (req, res) => {};
 
 module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, editAdmin, getAffiliateTree };

@@ -13,7 +13,7 @@ const registerQueries = async (req, res) => {
             return res.status(404).json({ success: false, error: "User id not found" }); // subject and body
         }
 
-        if (subject && subject.trim() === "" || body && body.trim() === "") {
+        if (!subject || subject && subject.trim() === "" || !body || body && body.trim() === "") {
             return res.status(404).json({ success: false, error: "Subject and body fiels are mandetory." }); // subject and body
         }
 
@@ -95,6 +95,9 @@ const editQuery = async (req, res) => {
             return res.status(400).json({success: false, error: "Query id not found" }); // check query id
         }
     
+        if(!status || status && status.trim() === ""){
+            return res.status(400).json({success: false, error: "Blank status is not allowed." }); // check query id
+        }
     
         const query = await Query.findByIdAndUpdate(queryId, { status }, { new: true }); // find and update query
     

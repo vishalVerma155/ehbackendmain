@@ -106,12 +106,12 @@ const editCommission = async (req, res) => {
 
         const payload = {};
 
-        if (paymentStatus && paymentStatus.trim() !== "") {
+        if ( paymentStatus && paymentStatus.trim() !== "") {
             payload.paymentStatus = paymentStatus;
         }
 
 
-        if (finalStatus && finalStatus.trim() !== "") {
+        if ( finalStatus && finalStatus.trim() !== "") {
             payload.finalStatus = finalStatus;
         }
 
@@ -166,7 +166,7 @@ const editCommission = async (req, res) => {
 
 const getCommissionGiverWise = async (req, res) => {
     try {
-        const giverId = await req.params.giverId;
+        const giverId =  req.params.giverId;
 
         if (!giverId) {
             return res.status(404).json({ success: false, error: "Commission giver id not found" });
@@ -183,7 +183,7 @@ const getCommissionGiverWise = async (req, res) => {
 
 const getCommissionGetterWise = async (req, res) => {
     try {
-        const getterId = await req.params.getterId;
+        const getterId =  req.params.getterId;
 
         if (!getterId) {
             return res.status(404).json({ success: false, error: "Commission getter Id not found" });

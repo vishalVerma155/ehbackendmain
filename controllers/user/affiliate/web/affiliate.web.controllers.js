@@ -199,7 +199,7 @@ const loginAffiliate = async (req, res) => {
    try {
       const { userName, password } = req.body;
 
-      if (userName.trim() === "" || password.trim() === "") {
+      if (!userName || userName && userName.trim() === "" || !password || password && password.trim() === "") {
          return res.status(401).json({ Message: "All fields are compulsary" });
       }
 
@@ -336,13 +336,12 @@ const changeAffiliatePaswword = async (req, res) => {
    try {
       const { currentPassword, newPassword } = req.body; // take details
 
-      if (currentPassword.trim() === "" || newPassword.trim() === "") {
+      if (!currentPassword || currentPassword && currentPassword.trim() === "" || !newPassword || newPassword && newPassword.trim() === "") {
          return res.status(401).json({ Message: "Please enter all fields" });
       }
 
       const user = await User.findById(req.user._id);
-      console.log(user);
-
+      
       // compare password
       const isPasswordCorrect = await comparePassword(currentPassword, user.password);
 

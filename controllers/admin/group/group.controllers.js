@@ -7,13 +7,13 @@ const addGroup = async (req, res) => {
         const { groupName, groupDescription } = req.body;
         const groupImage = req.file?.path || undefined;
 
-        if (groupName.trim() === "") {
+        if (!groupName || groupName && groupName.trim() === "") {
             return res.status(404).json({ success: false, error: "Group name is compulsary" });
         }
 
         const group = new Group({
             groupName,
-            groupDescription,
+            groupDescription : groupDescription ? groupDescription : "undefined",
             groupImage
         })
 
@@ -34,7 +34,7 @@ const getGroupInfo = async (req, res) => {
 
     try {
         const { groupName } = req.body;
-        if (!groupName) {
+        if (!groupName || groupName && groupName.trim() === "") {
             return res.status(404).json({ success: false, error: "Group name is compulsary" });
         }
 
@@ -61,6 +61,10 @@ const addUserGroup = async (req, res) => {
     try {
         const userId = req.params.userId;
         const { groupName } = req.body;
+
+        if (!groupName || groupName && groupName.trim() === "") {
+            return res.status(404).json({ success: false, error: "Group name is compulsary" });
+        }
 
         const user = await Users.findById(userId);
 
@@ -104,8 +108,8 @@ const setDefaultGroup = async (req, res) => {
 
         const { groupName } = req.body;
 
-        if (!groupName) {
-            return res.status(404).json({ success: false, error: "Group name not found." });
+        if (!groupName || groupName && groupName.trim() === "") {
+            return res.status(404).json({ success: false, error: "Group name is compulsary" });
         }
 
         const settings = await Settings.findOne();

@@ -11,7 +11,7 @@ const createMLM = async(req, res) =>{
 
         const { totalCommission, commissionType} = req.body;
 
-        if(!totalCommission || totalCommission < 0 || commissionType && commissionType.trim() === ""){
+        if(!totalCommission || totalCommission < 0 || !commissionType || commissionType && commissionType.trim() === ""){
             return res.status(404).json({ success: false, error: "Commission and commission type is compulsary." });
         }
 
@@ -43,7 +43,7 @@ const editMLM = async(req, res) =>{
             return res.status(404).json({ success: false, error: "MLM id is compulsary" });
         }
 
-        if(totalMLMLevel && totalMLMLevel < 0 || adminCommission && adminCommission < 0 || commissions.length <= 0){
+        if(!totalMLMLevel || totalMLMLevel && totalMLMLevel < 0 || !adminCommission || adminCommission && adminCommission < 0 || commissions.length <= 0){
             return res.status(404).json({ success: false, error: "All fields are compulsary type is compulsary." });
         }
 

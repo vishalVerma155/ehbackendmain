@@ -8,7 +8,7 @@ const createDepositReceipt = async (req, res) => {
 
         const userId = req.user._id;
 
-        if (userId && userId.trim() === "") {
+        if (!userId || userId && userId.trim() === "") {
             return res.status(404).json({ success: false, error: "Vendor is not loged in" });
         }
 
@@ -100,7 +100,7 @@ const getAllReceiptCurrentUser = async(req, res) =>{
     try {
         const currUser = req.user._id;
 
-        if (currUser && currUser.trim() === "") {
+        if (!currUser || currUser && currUser.trim() === "") {
             return res.status(404).json({ success: false, error: "Vendor is not loged in" });
         }
 

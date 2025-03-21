@@ -168,7 +168,7 @@ const loginVendor = async (req, res) => {
     try {
         const { userName, password } = req.body;
 
-        if (userName.trim() === "" || password.trim() === "") {
+        if (!userName || userName && userName.trim() === "" || !password || password && password.trim() === "") {
             return res.status(401).json({ Message: "All fields are compulsary" });
         }
 
@@ -211,7 +211,7 @@ const editVendor = async (req, res) => {
         const { firstName, lastName, storeName, country } = req.body;
         const user = req.user._id;
 
-        if (user && user.trim() === "") {
+        if (!user || user && user.trim() === "") {
             return res.status(404).json({ success: false, error: "Vendor is not loged in" });
         }
 
@@ -255,6 +255,10 @@ const deleteVendorProfile = async (req, res) => {
         }
 
         const { password } = req.body;
+
+        if (!password || password && password.trim() === "") {
+            return res.status(404).json({success: false, error: "User id not found" });
+        }
         const user = await User.findById(userId); // find user
         if (!user) {
             return res.status(404).json({success: false, error: "User not found" });
@@ -280,13 +284,13 @@ const changeVendorPassword = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        if (userId && userId.trim() === "") {
+        if (!userId || userId && userId.trim() === "") {
             return res.status(404).json({ success: false, error: "Vendor is not loged in" });
         }
 
         const { currentPassword, newPassword } = req.body; // take details
 
-        if (currentPassword && currentPassword.trim() === "" || newPassword && newPassword.trim() === "") {
+        if (!currentPassword || currentPassword && currentPassword.trim() === "" || !currentPassword || currentPassword && newPassword.trim() === "") {
             return res.status(401).json({ success: false, error: "Please enter all fields" });
         }
 
