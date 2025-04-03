@@ -32,7 +32,7 @@ const createMarketingProgram = async (req, res) => {
             .populate("mlm", "totalMLMLevel totalCommission adminCommission commissions")
             .lean();
 
-        return res.status(200).json({ success: true, makertingProgram : program});
+        return res.status(200).json({ success: true, makertingProgram: program });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
@@ -76,7 +76,9 @@ const getAllMarketingProgramForVendor = async (req, res) => {
 
     try {
         const userId = req.user._id;
-        const programs = await MarketingProgram.find({ userId });
+        const programs = await MarketingProgram.find({ userId })
+            .populate("mlm", "totalMLMLevel totalCommission adminCommission commissions")
+            .lean();
         return res.status(200).json({ success: true, programs });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
