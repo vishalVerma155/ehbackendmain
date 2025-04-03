@@ -2,6 +2,7 @@ const User = require('../../../../models/user/web/user.model.js');
 const Counter = require('../../../../models/user/countModel/affiliateCount.model.js');
 const generateJWT = require('../../../../utils/jwt.js');
 const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js');
+const axios = require("axios");
 
 // register vendor with email id and password
 const registerVendor = async (req, res) => {
