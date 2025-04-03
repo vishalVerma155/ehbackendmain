@@ -1,7 +1,7 @@
 
 const express = require('express');
 const verifyJWT = require('../../../middleware/authMiddleware.js');
-const {registerAffiliateWithGoogle, generateAffiliateLink, registerAffiliate,loginAffiliate, editAffiliate, distributeCommision, getUserByUserId} = require('../../../controllers/user/affiliate/web/affiliate.web.controllers.js');
+const {registerAffiliateWithGoogle, generateAffiliateLink, registerAffiliate,loginAffiliate, editAffiliate, distributeCommision, getUserByUserId } = require('../../../controllers/user/affiliate/web/affiliate.web.controllers.js');
 
 
 

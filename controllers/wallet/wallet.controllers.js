@@ -3,7 +3,7 @@ const Wallet = require('../../models/wallet/wallet.model.js');
 const createOrGetWallet = async (req, res) => {
 
     try {
-        const userId = req.user._id;
+        const userId = req.params.userId;
 
         if (!userId) {
             return res.status(404).json({ success: false, error: "user id not found" });
@@ -34,6 +34,27 @@ const createOrGetWallet = async (req, res) => {
     }
 }
 
+const getWallterCurrUser = async(req, res) =>{
+    try {
+        const userId = req.user._id;
+
+        if (!userId) {
+            return res.status(404).json({ success: false, error: "user id not found" });
+        }
+
+        const isWalletExisted = await Wallet.findOne({ userId });
+
+        if(!isWalletExisted){
+            return res.status(404).json({ success: false, error: "Wallet not found" });
+        }
+
+        return res.status(200).json({ success: true, wallet : isWalletExisted });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+ 
 const addTranstionData = async (req, res) => {
     try {
         const { transactionId, amount, status, commissionReceipt, giverId, getterId } = req.body;
@@ -224,4 +245,4 @@ const getLedgerByUserId = async(req, res) =>{
     
 }
 
-module.exports = { createOrGetWallet, addTranstionData, getLedger, getLedgerByUserId };
+module.exports = { createOrGetWallet, addTranstionData, getLedger, getLedgerByUserId, getWallterCurrUser };

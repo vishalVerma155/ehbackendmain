@@ -1,8 +1,9 @@
 
 const express = require('express');
-// const verifyJWT = require('../../middleware/authMIddleware.js');
 const {registerAdmin, loginAdmin, getAllUsersList, searchUser, editAdmin, getAffiliateTree} = require('../../controllers/admin/web/admin.web.controllers.js');
 const verifyJWT = require('../../middleware/authMiddleware.js');
+const {deleteVendorProfile, getAllVendors} = require('../../controllers/user/vendor/web/vendor.web.controllers.js');
+const {deleteAffiliateProfile, getAllAffiliates} = require("../../controllers/user/affiliate/web/affiliate.web.controllers.js")
 
 
 
@@ -28,6 +29,25 @@ router.get("/affiliateTree/:userId", getAffiliateTree);
 
 
 
+
+
+// get all vendors
+router.get("/getAllVendors", verifyJWT, getAllVendors);
+
+// delete vendor profile 
+router.delete("/deleteVendorProfile/:userId", verifyJWT, deleteVendorProfile);
+
+
+
+
+
+
+
+// get all affiliate
+router.get("/getAllAffiliates", verifyJWT, getAllAffiliates);
+
+// delete affiliate profile 
+router.delete("/deleteAffiliateProfile/:userId", verifyJWT, deleteAffiliateProfile);
 
 
 module.exports = router;

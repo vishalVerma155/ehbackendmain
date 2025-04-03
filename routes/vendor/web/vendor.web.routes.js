@@ -1,7 +1,7 @@
 
 const express = require('express');
 const verifyJWT = require('../../../middleware/authMiddleware.js');
-const {registerVendor, registerVendorWithGoogle, editVendor, loginVendor, changeVendorPassword, deleteVendorProfile } = require('../../../controllers/user/vendor/web/vendor.web.controllers.js');
+const {registerVendor, registerVendorWithGoogle, editVendor, loginVendor, changeVendorPassword} = require('../../../controllers/user/vendor/web/vendor.web.controllers.js');
 
 
 
@@ -22,8 +22,6 @@ router.patch("/editVendor",verifyJWT, editVendor);
 // change password
 router.patch("/changePassword", verifyJWT, changeVendorPassword);
 
-// delete vendor profile 
-router.delete("/deleteVendorProfile", verifyJWT, deleteVendorProfile);
 
 
 

@@ -3,7 +3,7 @@ const Counter = require('../../../../models/user/countModel/affiliateCount.model
 const generateJWT = require('../../../../utils/jwt.js');
 const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js');
 const Settings = require('../../../../models/admin/settings/settings.model.js');
-const { default: axios } = require('axios');
+const axios = require('axios');
 
 // register affiliate with email id and password
 const registerAffiliate = async (req, res) => {
@@ -24,27 +24,30 @@ const registerAffiliate = async (req, res) => {
       let referrerAff; // declair referrer affiliate
 
       if (referrerAffiliateId) {
+
          referrerAff = await User.findOne({ // find referrer affiliate
             userId: referrerAffiliateId
          });
+
+
          if (!referrerAff) {
-            return res.status(404).json({ Error: "  Refferrer Affiliate not found" });
+            return res.status(404).json({ success: false, error: "  Refferrer Affiliate not found" });
          }
       }
 
       // check blank fields
-      const isBlank = [firstName, email, password].some(fields => fields.trim() === "");
 
-      if (isBlank) {
-         return res.status(401).json({ Message: "First Name, Email, Password are compulsary" });
+      if (!firstName || firstName && firstName.trim() === "" || !email || email && email.trim() === "" || !password || password && password.trim() === "") {
+         return res.status(401).json({ success: false, error: "First Name, Email, Password are compulsary" });
       }
+
 
       // check if affiliate is already existed
       const isUserExisted = await User.findOne({ email });
 
-      // 
+
       if (isUserExisted) {
-         return res.status(401).json({ Message: "User is already existed. Please login or choose other user name" });
+         return res.status(401).json({ success: false, error: "User is already existed. Please login or choose other user name" });
       }
 
       const hashedPassword = await hashPassword(password);
@@ -62,7 +65,7 @@ const registerAffiliate = async (req, res) => {
          userId: "fa1",
          referrer: referrerAff ? referrerAff._id : null,
          password: hashedPassword,
-         groups : defaultGroup
+         groups: defaultGroup
       })
 
       await newUser.save(); // save user
@@ -79,14 +82,14 @@ const registerAffiliate = async (req, res) => {
       // save affiliate
       await newUser.save();
 
-      const user = await User.findOne({ email: newUser.email }); // double  check user
-
-      if (!user) {
-         return res.status(404).json({ Message: "User not found. There is something problem in user data saving" });
+      if (!newUser) {
+         return res.status(404).json({ success: false, error: "User not found. There is something problem in user data saving" });
       }
 
+      const wallet = await axios.post(`https://ehbackendmain.onrender.com/wallet/createWallet/${newUser._id}`);
+
       // return response
-      res.status(200).json({ Message: "Affiliate has been  sucessfully register.", affiliate: user });
+      res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register.", affiliate: newUser, walletCreated: wallet.data.success });
    } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
    }
@@ -100,11 +103,7 @@ const registerAffiliateWithGoogle = async (req, res) => {
       const { firstName, lastName, email, googleId, aff_id } = req.body; // get affiliate id
 
 
-      if (googleId) {
-
-         if (googleId.trim() === "") {
-            return res.status(401).json({ Message: "Google id not found." });
-         }
+      if (googleId && googleId.trim() !== "") {
 
          const referrerAffiliateId = aff_id; // get referrer affiliate id
 
@@ -115,7 +114,7 @@ const registerAffiliateWithGoogle = async (req, res) => {
                userId: referrerAffiliateId
             });
             if (!referrerAff) {
-               return res.status(404).json({ Error: "  Refferrer Affiliate not found" });
+               return res.status(404).json({ success: false, error: "  Refferrer Affiliate not found" });
             }
          }
 
@@ -123,11 +122,11 @@ const registerAffiliateWithGoogle = async (req, res) => {
 
          if (!isUserExisted) {
             // check blank fields
-            const isBlank = [firstName, lastName, email].some(fields => fields.trim() === "");
 
-            if (isBlank) {
-               return res.status(401).json({ Message: "All fields are compulsary" });
+            if (!firstName || firstName && firstName.trim() === "" || !email || email && email.trim() === "") {
+               return res.status(401).json({ success: false, error: "First Name, Email, Password are compulsary" });
             }
+
 
             const settings = await Settings.findOne();
             const defaultGroup = settings ? settings.defaultGroup : "prime";
@@ -140,7 +139,7 @@ const registerAffiliateWithGoogle = async (req, res) => {
                userId: "fa1",
                referrer: referrerAff ? referrerAff._id : null, // check reffere is existed or not
                googleId,
-               groups : defaultGroup
+               groups: defaultGroup
             })
 
             await newUser.save(); // save user
@@ -157,26 +156,27 @@ const registerAffiliateWithGoogle = async (req, res) => {
             // save affiliate
             await newUser.save();
 
-            
-         const payload = {
-            _id: newUser._id,
-            email: newUser.email,
-            role : newUser.role
-         }
+            const wallet = await axios.post(`https://ehbackendmain.onrender.com/wallet/createWallet/${newUser._id}`);
 
-         // generate jwt token
-         const accessToken = generateJWT(payload);
+            const payload = {
+               _id: newUser._id,
+               email: newUser.email,
+               role: newUser.role
+            }
 
-         res.cookie("AccessToken", accessToken);
+            // generate jwt token
+            const accessToken = generateJWT(payload);
 
-            return res.status(200).json({ Message: "Affiliate has been  sucessfully register.", affiliate: newUser, accessToken });
+            res.cookie("AccessToken", accessToken);
+
+            return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register.", affiliate: newUser, token: accessToken, walletCreated : wallet.data.success });
          }
 
 
          const payload = {
             _id: isUserExisted._id,
             email: isUserExisted.email,
-            role : isUserExisted.role
+            role: isUserExisted.role
          }
 
          // generate jwt token
@@ -184,10 +184,10 @@ const registerAffiliateWithGoogle = async (req, res) => {
 
          res.cookie("AccessToken", accessToken);
 
-         return res.status(200).json({ Message: "Affiliate has been  sucessfully Loged in.", affiliate: isUserExisted, token: accessToken });
+         return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in.", affiliate: isUserExisted, token: accessToken });
       }
 
-      return res.status(404).json({ Error: "Google id not found" });
+      return res.status(404).json({success: false, error: "Google id not found" });
 
    } catch (error) {
       res.status(500).json({ success: false, error: error.message });
@@ -200,26 +200,27 @@ const loginAffiliate = async (req, res) => {
       const { userName, password } = req.body;
 
       if (!userName || userName && userName.trim() === "" || !password || password && password.trim() === "") {
-         return res.status(401).json({ Message: "All fields are compulsary" });
+         return res.status(401).json({success: false, error: "All fields are compulsary" });
       }
 
       const user = await User.findOne({ $or: [{ userName }, { email: userName }] });
 
 
       if (!user) {
-         return res.status(401).json({ Message: "User is not existed." });
+         return res.status(401).json({success: false, error: "User is not existed." });
       }
 
       // compare password
       const isPasswordCorrect = await comparePassword(password, user.password);
 
       if (!isPasswordCorrect) {
-         return res.status(401).json({ Message: "Invalid password" });
+         return res.status(401).json({success: false, error: "Invalid password" });
       }
 
       const payload = {
          _id: user._id,
-         email: user.email
+         email: user.email,
+         role : user.role
       }
 
       // generate jwt token
@@ -228,7 +229,7 @@ const loginAffiliate = async (req, res) => {
       res.cookie("AccessToken", accessToken);
 
       // return response
-      return res.status(200).json({ Message: "Affiliate has been  sucessfully Loged in.", affiliate: user, token: accessToken });
+      return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in.", affiliate: user, token: accessToken });
    } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
    }
@@ -255,7 +256,7 @@ const editAffiliate = async (req, res) => {
       const user = req.user._id;
 
       if (!user) {
-         return res.status(500).json({ success: false, message: "Affiliate is not loged in" });
+         return res.status(500).json({ success: false, error: "Affiliate is not loged in" });
       }
 
       let payload = {};
@@ -274,7 +275,7 @@ const editAffiliate = async (req, res) => {
       const updatedAffiliate = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
 
       if (!updatedAffiliate) {
-         return res.status(400).json({ success: false, message: "Affiliate is not updated" });
+         return res.status(400).json({ success: false, error: "Affiliate is not updated" });
       }
 
       return res.status(200).json({ success: true, message: "Affiliate is updated", updatedAffiliate });
@@ -284,44 +285,55 @@ const editAffiliate = async (req, res) => {
 
 }
 
-// delete affiliate profile
+// get all affiliates
+const getAllAffiliates = async(req, res) =>{
+   try {
+      const role = req.user.role;
+      if(!role || role !== "admin"){
+         return res.status(401).json({ success: false, error: "Only admin can do this" });
+      }
 
+      const aff_list = await User.find({role : "affiliate"});
+      return res.status(200).json({ success: true, affiliatesList : aff_list });
+
+   } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+   }
+}
+
+// delete affiliate profile
 const deleteAffiliateProfile = async (req, res) => {
    try {
-      const userId = req.user._id; // get user id
+      const userId = req.params.userId; // get user id
 
-      const { password } = req.body;
-
-      const user = await User.findById(userId); // find and delete user
-      if (!user) {
-         return res.status(404).json({ Message: "User not found" });
+      if (!userId) {
+         return res.status(404).json({success: false, error: "User id not found" });
       }
 
-      const isPasswordCorrect = await comparePassword(password, user.password);
-      if (!isPasswordCorrect) {
-         return res.status(402).json({ Message: "Wrong password" });
+      const deletedAffiliate = await User.findByIdAndDelete(userId); // find and delete user
+      
+      if (!deletedAffiliate) {
+         return res.status(404).json({success: false, error: "Affiliate not found" });
       }
 
-      const deletedAffiliate = await User.findByIdAndDelete(user._id); // find and delete user
-      res.clearCookie("AccessToken"); // clear cookies for logout
-      return res.status(200).json({ Message: "Affiliate has been sucessfully deleted", deletedAffiliate }); // return response
+      return res.status(200).json({success: true, Message: "Affiliate has been sucessfully deleted", deletedAffiliate }); // return response
    } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
    }
 }
 
 // get affiliate by affiliate id
-const getUserByUserId = async(req, res) =>{
+const getUserByUserId = async (req, res) => {
    try {
       const userId = req.params.userId;
-      if(!userId){
-         return res.status(404).json({ success: false, message: "User id  not found." });
+      if (!userId) {
+         return res.status(404).json({ success: false, error: "User id  not found." });
       }
 
-      const user = await User.findOne({userId});
+      const user = await User.findOne({ userId });
 
-      if(!user){
-         return res.status(404).json({ success: false, message: "User not found." });
+      if (!user) {
+         return res.status(404).json({ success: false, error: "User not found." });
       }
 
       return res.status(200).json({ success: true, user });
@@ -337,16 +349,16 @@ const changeAffiliatePaswword = async (req, res) => {
       const { currentPassword, newPassword } = req.body; // take details
 
       if (!currentPassword || currentPassword && currentPassword.trim() === "" || !newPassword || newPassword && newPassword.trim() === "") {
-         return res.status(401).json({ Message: "Please enter all fields" });
+         return res.status(401).json({success: false, error: "Please enter all fields" });
       }
 
       const user = await User.findById(req.user._id);
-      
+
       // compare password
       const isPasswordCorrect = await comparePassword(currentPassword, user.password);
 
       if (!isPasswordCorrect) {
-         return res.status(401).json({ Message: "password is not matched" });
+         return res.status(401).json({success: false, error: "password is not matched" });
       }
 
       const newHashedPassword = await hashPassword(newPassword); // hash new password
@@ -354,40 +366,40 @@ const changeAffiliatePaswword = async (req, res) => {
 
       await user.save(); // save user password
 
-      return res.status(200).json({ Message: "Password has been chenged" });
+      return res.status(200).json({success: true, Message: "Password has been chenged" });
    } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
    }
 }
 
-const distributeCommision = async (req, res) =>{
+const distributeCommision = async (req, res) => {
 
    try {
 
-      const {sellerId, totalAmount} = req.body;
+      const { sellerId, totalAmount } = req.body;
       let commissionAdmin = (22 / 100) * totalAmount; // 22% of total price
       const levels = [4, 3, 2, 2, 1]; // Commission for each level
       let currentUser = await User.findOne({ _id: sellerId });
-  
+
       let distributedAmount = 0; // Track how much is given
       let level = 0;
       let userArr = [];
-      
-  
+
+
       while (currentUser && currentUser.referrer && level < levels.length) {
-          let referrer = await User.findOne({ _id: currentUser.referrer });
-  
-          if (!referrer) break; // Stop if no referrer exists
-          distributedAmount += totalAmount * (levels[level]/100);
-          commissionAdmin -= totalAmount * (levels[level]/100);
-  
-          userArr.push(referrer);
-          currentUser = referrer; // Move up the chain
-          level++; // Increase level
+         let referrer = await User.findOne({ _id: currentUser.referrer });
+
+         if (!referrer) break; // Stop if no referrer exists
+         distributedAmount += totalAmount * (levels[level] / 100);
+         commissionAdmin -= totalAmount * (levels[level] / 100);
+
+         userArr.push(referrer);
+         currentUser = referrer; // Move up the chain
+         level++; // Increase level
       }
-  
-      
-      return res.json({Array : userArr, distributedAmount, commissionAdmin});
+
+
+      return res.json({ Array: userArr, distributedAmount, commissionAdmin });
    } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
    }
@@ -395,4 +407,4 @@ const distributeCommision = async (req, res) =>{
 }
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword, distributeCommision, getUserByUserId };
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword, distributeCommision, getUserByUserId, getAllAffiliates };
