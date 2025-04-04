@@ -23,6 +23,11 @@ const marketingProgramSchema = new mongoose.Schema({
         type: Number,
         min: 0,
     },
+    totalCommission: {
+        type: Number,
+        min: 0,
+        required : true
+    },
     amountPerClick: {
         type: Number,
         min: 0,

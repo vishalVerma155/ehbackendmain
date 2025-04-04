@@ -7,9 +7,6 @@ const distributeCommision = async (req, res) => {
     try {
 
         const { sellerId, campaignId } = req.body;
-        // let commissionAdmin = (22 / 100) * totalAmount; // 22% of total price
-        // const levels = [4, 3, 2, 2, 1]; // Commission for each level
-        console.log(campaignId);
         
         let distributedAmount = 0; // Track how much is given
         let level = 0;
@@ -55,8 +52,6 @@ const distributeCommision = async (req, res) => {
             level++; // Increase level
         }
 
-        console.log("level", level)
-        console.log("mlm", mlmLevels.length)
 
         while(level < mlmLevels.length){
             adminCom.push({amt : productPrice * (mlmLevels[level].commission / 100),  percentage : mlmLevels[level].commission});
