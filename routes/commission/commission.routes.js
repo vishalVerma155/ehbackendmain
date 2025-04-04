@@ -7,7 +7,7 @@ const {createCommission, getAllCommissionForAdmin, getCommissionGetterWise, getC
 const router = express.Router();
 
 // register bank details
-router.post("/createCommission",verifyJWT, createCommission);
+router.post("/createCommission", createCommission);
 
 // get all bank account
 router.get("/getAllCommissionForAdmin", getAllCommissionForAdmin);

@@ -9,16 +9,19 @@ const createMLM = async(req, res) =>{
             return res.status(404).json({ success: false, error: "User id not found." });
         }
 
-        const { totalCommission, commissionType} = req.body;
+        const { totalCommission, commissionType, totalMLMLevel, adminCommission, commissions} = req.body;
 
-        if(!totalCommission || totalCommission < 0 || !commissionType || commissionType && commissionType.trim() === ""){
-            return res.status(404).json({ success: false, error: "Commission and commission type is compulsary." });
+        if(!totalCommission || totalCommission < 0 || !commissionType || commissionType && commissionType.trim() === "" || !totalMLMLevel || !adminCommission || !commissions){
+            return res.status(404).json({ success: false, error: "All fields are required compulsary." });
         }
 
         const mlm = new MLMCommission({
             userId,
             totalCommission,
-            commissionType
+            commissionType,
+            totalMLMLevel,
+            adminCommission,
+            commissions
         })
 
         await mlm.save();

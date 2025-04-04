@@ -6,13 +6,18 @@ const axios = require('axios');
 const createCommission = async (req, res) => {
 
     try {
+        console.log("Enttetet 1");
         const { type, totalSaleAmount, commissionPercentage, integrationType, transactionId } = req.body;
+        console.log("Enttetet 2", commissionPercentage);
+        // console.log(req.body);
 
-        const isBlank = [type, totalSaleAmount, commissionPercentage, integrationType, transactionId].some((field) => field.trim() === "");
+        const isBlank = [type, integrationType, transactionId].some((field) => field.trim() === "");
+        console.log("Enttetet 3");
 
         if (isBlank) {
             return res.status(404).json({ success: false, error: " Type, Total Sale Amount, Commission Percentage, Integration Type, Transaction Id are compulsary" });
         }
+        console.log("Enttetet 4");
 
         let { giverId, getterId, giverType } = req.body;
 
@@ -20,16 +25,26 @@ const createCommission = async (req, res) => {
         let getter = undefined;
         let getterAdmin = undefined;
         let giverAdmin = undefined;
+        console.log("Enttetet 5");
 
         if (giverType === "vendor") {
+        console.log("Enttetet 6");
+
             giver = await User.findById(giverId);
+        console.log("Enttetet 7");
+
             getterAdmin = await Admin.findById(getterId);
+            console.log("Enttetet 8");
 
             if (!giver) {
+        console.log("Enttetet 9");
+
                 return res.status(404).json({ success: false, error: "Commission giver not found" });
             }
 
             if (!getterAdmin) {
+        console.log("Enttetet 10");
+
                 return res.status(404).json({ success: false, error: "Commission getter admin not found" });
             }
         }
@@ -48,8 +63,12 @@ const createCommission = async (req, res) => {
         }
 
 
-        const commission = totalSaleAmount * (commissionPercentage / 100);
+        console.log("Enttetet 11");
 
+        const commission = totalSaleAmount * (commissionPercentage / 100);
+        console.log("Enttetet 12");
+
+        console.log(req.body)
         const commissionReceipt = new Commission({
             getterId: getter ? getter : undefined,
             giverId: giver ? giver : undefined,
@@ -62,20 +81,29 @@ const createCommission = async (req, res) => {
             integrationType,
             transactionId
         });
+        console.log("Enttetet 13");
 
         await commissionReceipt.save();
+        console.log("Enttetet 14");
 
         if (!commissionReceipt) {
             return res.status(500).json({ success: false, error: "error in creating commission receipt" });
         }
+        console.log("Enttetet 15");
+
 
         let populatedCommissionReceipt = undefined;
+        console.log("Enttetet 16");
 
         if (giverType === "vendor") {
+        console.log("Enttetet 17");
+
             populatedCommissionReceipt = await Commission.findById(commissionReceipt._id)
                 .populate("giverId", "firstName lastName email userId role")
                 .populate("getterAdmin", "fullName email userId role")
                 .lean(); // Convert Mongoose document to plain object for better performance
+        console.log("Enttetet 18");
+
         }
 
         if (giverType === "admin") {
@@ -84,6 +112,8 @@ const createCommission = async (req, res) => {
                 .populate("giverAdmin", "fullName email userId role")
                 .lean(); // Convert Mongoose document to plain object for better performance
         }
+
+        console.log("Enttetet 19");
 
         return res.status(200).json({ success: true, populatedCommissionReceipt });
     } catch (error) {
@@ -202,7 +232,7 @@ const getAllCommissionForAdmin = async (req, res) => {
 
     try {
 
-        const allCommission = await Commission.find().sort({ paymentStatus: -1 });
+        const allCommission = await Commission.find().sort({ paymentStatus: -1, createdAt: -1 });
         return res.status(200).json({ success: true, allCommission });
 
     } catch (error) {
