@@ -2,16 +2,17 @@
 const express = require('express');
 const verifyJWT = require('../../../../middleware/authMiddleware.js');
 const {createCampaign, editCampaign, getAllCampaignsForAdmin, getCampaign, getCampainListForVendor, deleteCampaign} = require('../../../../controllers/user/vendor/marketTools/campaign/campaign.controllers.js');
+const {upload} = require('../../../../utils/multer.js');
 
 
 
 const router = express.Router();
 
 // create campaign
-router.post("/createCampaign", verifyJWT, createCampaign);
+router.post("/createCampaign", verifyJWT, upload.single('campaignImage'), createCampaign);
 
 // edit marketing program
-router.patch("/editCampaign/:campaignId", verifyJWT, editCampaign);
+router.patch("/editCampaign/:campaignId", verifyJWT,upload.single('campaignImage'), editCampaign);
 
 // get all programs
 router.get("/getAllCampaignForAdmin", verifyJWT, getAllCampaignsForAdmin);

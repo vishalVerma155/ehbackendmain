@@ -7,6 +7,8 @@ const createCampaign = async (req, res) => {
     try {
 
         const userId = req.user._id;
+        const img = req.file?.path || undefined; // get image
+
 
         if (!userId) {
             return res.status(404).json({ success: false, error: "user id not found" });
@@ -24,6 +26,7 @@ const createCampaign = async (req, res) => {
 
         const campaign = new Campaign({
             userId,
+            image: img,
             ...data
         });
 
@@ -67,7 +70,7 @@ const editCampaign = async (req, res) => {
     try {
         const campaignId = req.params.campaignId;
         const data = req.body;
-
+        const img = req.file?.path || undefined; // get image
 
         if (!campaignId) {
             return res.status(404).json({ success: false, error: "campaign Id not found" });
