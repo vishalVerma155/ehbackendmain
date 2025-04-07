@@ -37,16 +37,11 @@ const distributeCommision = async (req, res) => {
             return res.status(404).json({ success: false, error: "Campaign not found" });
         }
 
-
-
         let distributedAmount = 0; // Track how much is given
         let level = 0;
 
-
-
         const mlmLevels = campaign.program.mlm.commissions;
         const productPrice = campaign.productPrice;
-        const adminCom = [];
         const commReceipt = [];
         const vendorId = campaign.userId;
         const adminCommission = campaign.program.totalCommission;
