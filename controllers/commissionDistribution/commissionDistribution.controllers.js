@@ -116,7 +116,6 @@ const distributeCommision = async (req, res) => {
             level++; // Increase level
         }
 
-        console.log("Enter 13");
 
         return res.json({commReceipt, adminCommission, mlmLevels, level, distributedAmount });
     } catch (error) {
