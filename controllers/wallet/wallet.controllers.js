@@ -28,7 +28,7 @@ const createOrGetWallet = async (req, res) => {
             return res.status(404).json({ success: false, error: "Wallet not created" });
         }
 
-        return res.status(200).json({ success: true, wallet });
+        return res.status(200).json({ success: true, wallet : {balance : wallet.balance} });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
@@ -44,11 +44,15 @@ const getWallterCurrUser = async(req, res) =>{
 
         const isWalletExisted = await Wallet.findOne({ userId });
 
+        const paidBalance = isWalletExisted.transactions
+        .filter((field) => field.drCr === "DR")
+        .reduce((total, field) => total + field.amount, 0);
+
         if(!isWalletExisted){
             return res.status(404).json({ success: false, error: "Wallet not found" });
         }
 
-        return res.status(200).json({ success: true, wallet : isWalletExisted });
+        return res.status(200).json({ success: true, wallet :{balance : isWalletExisted.balance, paidBalance } });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
