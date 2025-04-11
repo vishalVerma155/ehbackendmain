@@ -173,10 +173,18 @@ const editCommission = async (req, res) => {
 
 const getCommissionGiverWise = async (req, res) => {
     try {
-        const giverId =  req.params.giverId;
+        const giverId =  req.user._id;
+        const role = req.user.role;
 
         if (!giverId) {
-            return res.status(404).json({ success: false, error: "Commission giver id not found" });
+            return res.status(404).json({ success: false, error: "User is not loged in." });
+        }
+
+        if(role === "admin"){
+
+            const giverCommission = await Commission.find({ giverAdmin : giverId });
+
+            return res.status(200).json({ success: true, given_Commission: giverCommission });
         }
 
         const giverCommission = await Commission.find({ giverId });
@@ -190,10 +198,16 @@ const getCommissionGiverWise = async (req, res) => {
 
 const getCommissionGetterWise = async (req, res) => {
     try {
-        const getterId =  req.params.getterId;
+        const getterId =  req.user._id;
+        const role = req.user.role;
 
         if (!getterId) {
-            return res.status(404).json({ success: false, error: "Commission getter Id not found" });
+            return res.status(404).json({ success: false, error: "User is not loged in" });
+        }
+
+        if(role === "admin"){
+            const getterCommission = await Commission.find({ getterAdmin : getterId });
+            return res.status(200).json({ success: true, getter_Commission: getterCommission });
         }
 
         const getterCommission = await Commission.find({ getterId });

@@ -18,11 +18,11 @@ router.get("/filterCommission",verifyJWT, commissionFilterApi);
 
 
 // get commission giver wise
-router.get("/getCommissionGiver/:giverId", verifyJWT, getCommissionGiverWise);
+router.get("/getCommissionGiverWise", verifyJWT, getCommissionGiverWise);
 
 
 // get commission getter wise
-router.get("/getCommissionGetter/:giverId", verifyJWT, getCommissionGetterWise);
+router.get("/getCommissionGetterWise", verifyJWT, getCommissionGetterWise);
 
 // // delete bank detail
 // router.delete("/deleteBankDetail/:accountId", verifyJWT, deleteBankDetails);

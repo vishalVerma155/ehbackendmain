@@ -170,7 +170,8 @@ const loginVendor = async (req, res) => {
 
         const payload = {
             _id: user._id,
-            email: user.email
+            email: user.email,
+            role : user.role
         }
 
         // generate jwt token
