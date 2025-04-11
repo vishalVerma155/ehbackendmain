@@ -30,6 +30,10 @@ const campaignSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    mrp: {
+        type: String,
+        trim: true
+    },
     productPrice: {
         type: Number,
         required: true,
