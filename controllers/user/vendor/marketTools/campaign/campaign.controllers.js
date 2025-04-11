@@ -14,9 +14,9 @@ const createCampaign = async (req, res) => {
             return res.status(404).json({ success: false, error: "user id not found" });
         }
 
-        const { toolType, name, campaignTargetLink, productPrice, linkTitle } = req.body;
+        const { toolType, name, campaignTargetLink, linkTitle } = req.body;
 
-        const isBlank = [toolType, name, campaignTargetLink, productPrice, linkTitle].some((field) => field.trim() === "");
+        const isBlank = [toolType, name, campaignTargetLink, linkTitle].some((field) => field.trim() === "");
 
         if (isBlank) {
             return res.status(404).json({ success: false, error: "Tool type, Name, Campaign Target Link, Product Price, Link Title are compulsary" });
@@ -41,7 +41,7 @@ const createCampaign = async (req, res) => {
             .populate("selectedAffiliates", "firstName lastName email userId")
             .populate({
                 path: "program",
-                select: "programName commissionType saleCommission commissionForSale status mlm",
+                select: "programName commissionType saleCommission commissionForSale status mlm image",
                 populate: {
                     path: "mlm", // Populating MLM inside the program
                     select: "totalMLMLevel totalCommission adminCommission commissions", // Selecting specific fields from MLM    
