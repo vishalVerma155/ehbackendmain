@@ -31,8 +31,8 @@ const campaignSchema = new mongoose.Schema({
         trim: true
     },
     mrp: {
-        type: String,
-        trim: true
+        type: Number,
+        min : 0
     },
     productPrice: {
         type: Number,
