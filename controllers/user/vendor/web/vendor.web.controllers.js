@@ -3,6 +3,7 @@ const Counter = require('../../../../models/user/countModel/affiliateCount.model
 const generateJWT = require('../../../../utils/jwt.js');
 const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js');
 const axios = require("axios");
+const UAParser = require('ua-parser-js');
 
 // register vendor with email id and password
 const registerVendor = async (req, res) => {
@@ -29,7 +30,7 @@ const registerVendor = async (req, res) => {
 
         // 
         if (isUserExisted) {
-            return res.status(401).json({success: false, error: "User is already existed. Please login or choose other user name" });
+            return res.status(401).json({ success: false, error: "User is already existed. Please login or choose other user name" });
         }
 
         const hashedPassword = await hashPassword(password);
@@ -61,7 +62,7 @@ const registerVendor = async (req, res) => {
         const wallet = await axios.post(`https://ehbackendmain.onrender.com/wallet/createWallet/${newUser._id}`);
 
         // return response
-        res.status(200).json({success: true, Message: "Vendor has been  sucessfully register.", vendor: newUser, walletCreated: wallet.data.success });
+        res.status(200).json({ success: true, Message: "Vendor has been  sucessfully register.", vendor: newUser, walletCreated: wallet.data.success });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
@@ -83,8 +84,8 @@ const registerVendorWithGoogle = async (req, res) => {
 
                 if (!firstName || firstName && firstName.trim() === "" || !email || email && email.trim() === "") {
                     return res.status(401).json({ success: false, error: "First Name, Email, Password are compulsary" });
-                 }
-                
+                }
+
 
 
                 // create affiliate
@@ -119,7 +120,7 @@ const registerVendorWithGoogle = async (req, res) => {
 
                 res.cookie("AccessToken", accessToken);
 
-                return res.status(200).json({ success: true, Message: "Vendor has been sucessfully register.", vendor: newUser, token : accessToken, walletCreated: wallet.data.success });
+                return res.status(200).json({ success: true, Message: "Vendor has been sucessfully register.", vendor: newUser, token: accessToken, walletCreated: wallet.data.success });
             }
 
 
@@ -151,27 +152,27 @@ const loginVendor = async (req, res) => {
         const { userName, password } = req.body;
 
         if (!userName || userName && userName.trim() === "" || !password || password && password.trim() === "") {
-            return res.status(401).json({success: false, error: "All fields are compulsary" });
+            return res.status(401).json({ success: false, error: "All fields are compulsary" });
         }
 
         const user = await User.findOne({ $or: [{ userName }, { email: userName }] });
 
 
         if (!user) {
-            return res.status(401).json({success: false, error: "User is not existed." });
+            return res.status(401).json({ success: false, error: "User is not existed." });
         }
 
         // compare password
         const isPasswordCorrect = await comparePassword(password, user.password);
 
         if (!isPasswordCorrect) {
-            return res.status(401).json({success: false, error: "Invalid password" });
+            return res.status(401).json({ success: false, error: "Invalid password" });
         }
 
         const payload = {
             _id: user._id,
             email: user.email,
-            role : user.role
+            role: user.role
         }
 
         // generate jwt token
@@ -180,17 +181,26 @@ const loginVendor = async (req, res) => {
         res.cookie("AccessToken", accessToken);
 
         // return response
-        return res.status(200).json({success: true, Message: "Vendor has been sucessfully Loged in.", vendor: user, token: accessToken });
+        return res.status(200).json({ success: true, Message: "Vendor has been sucessfully Loged in.", vendor: user, token: accessToken });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
 }
 
-const getVendorProfile = async(req, res) =>{
+const getVendorProfile = async (req, res) => {
     try {
         const userId = req.user._id; // get user id
-        console.log(req.headers["user-agent"])
+        // console.log(req.headers["user-agent"])
+        const ua = req.headers['user-agent'];
+        console.log(ua);
+        const parser = new UAParser(ua);
+        const result = parser.getResult();
+        const trackedMob = {
+            browser: `${result.browser.name} - ${result.browser.version}`,
+            os: `${result.os.name} - Version: ${result.os.version}`,
+            mobileModel: result.device.model || '',
+          };
 
         if (!userId) {
             return res.status(404).json({ success: false, error: "User is not loged in" });
@@ -198,7 +208,7 @@ const getVendorProfile = async(req, res) =>{
 
         const vendorProfile = await User.findById(userId).select("-password -referrer -referredUsers "); // find and delete user
 
-        return res.status(200).json({ success: true, Message: "Vendor has been sucessfully fetched", vendorProfile }); // return response
+        return res.status(200).json({ success: true, Message: "Vendor has been sucessfully fetched", vendorProfile, trackedMob }); // return response
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
@@ -234,7 +244,7 @@ const editVendor = async (req, res) => {
 
         if (address) {
             payload.address = address;
-         }
+        }
 
         const updatedVendor = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
 
@@ -252,7 +262,7 @@ const editVendor = async (req, res) => {
 const deleteVendorProfile = async (req, res) => {
     try {
 
-        if(req.user.role !== "admin"){
+        if (req.user.role !== "admin") {
             return res.status(404).json({ success: false, error: "Only admin can delete profile" });
         }
         const userId = req.params.userId; // get user id
