@@ -190,6 +190,7 @@ const loginVendor = async (req, res) => {
 const getVendorProfile = async(req, res) =>{
     try {
         const userId = req.user._id; // get user id
+        console.log(req.headers["user-agent"])
 
         if (!userId) {
             return res.status(404).json({ success: false, error: "User is not loged in" });
