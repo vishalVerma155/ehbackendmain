@@ -187,11 +187,26 @@ const loginVendor = async (req, res) => {
     }
 }
 
+const getVendorProfile = async(req, res) =>{
+    try {
+        const userId = req.user._id; // get user id
+
+        if (!userId) {
+            return res.status(404).json({ success: false, error: "User is not loged in" });
+        }
+
+        const vendorProfile = await User.findById(userId).select("-password -referrer -referredUsers "); // find and delete user
+
+        return res.status(200).json({ success: true, Message: "Vendor has been sucessfully fetched", vendorProfile }); // return response
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
 
 const editVendor = async (req, res) => {
 
     try {
-        const { firstName, lastName, storeName, country } = req.body;
+        const { firstName, lastName, storeName, country, address } = req.body;
         const user = req.user._id;
 
         if (!user || user && user.trim() === "") {
@@ -216,6 +231,10 @@ const editVendor = async (req, res) => {
             payload.country = country;
         }
 
+        if (address) {
+            payload.address = address;
+         }
+
         const updatedVendor = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
 
         if (!updatedVendor) {
@@ -231,6 +250,10 @@ const editVendor = async (req, res) => {
 
 const deleteVendorProfile = async (req, res) => {
     try {
+
+        if(req.user.role !== "admin"){
+            return res.status(404).json({ success: false, error: "Only admin can delete profile" });
+        }
         const userId = req.params.userId; // get user id
 
         if (!userId) {
@@ -300,4 +323,4 @@ const getAllVendors = async (req, res) => {
     }
 }
 
-module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, deleteVendorProfile, changeVendorPassword, getAllVendors };
+module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, deleteVendorProfile, changeVendorPassword, getAllVendors, getVendorProfile };

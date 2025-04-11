@@ -252,7 +252,7 @@ const generateAffiliateLink = (req, res) => {
 const editAffiliate = async (req, res) => {
    try {
 
-      const { firstName, lastName, country } = req.body;
+      const { firstName, lastName, country, address } = req.body;
       const user = req.user._id;
 
       if (!user) {
@@ -270,6 +270,10 @@ const editAffiliate = async (req, res) => {
 
       if (country) {
          payload.country = country;
+      }
+
+      if (address) {
+         payload.address = address;
       }
 
       const updatedAffiliate = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
