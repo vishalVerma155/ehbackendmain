@@ -14,7 +14,7 @@ router.get("/getAllCommissionForAdmin", getAllCommissionForAdmin);
 
 router.patch("/editCommission/:commmissionId",verifyJWT, editCommission);
 
-router.get("/filterCommission",verifyJWT, commissionFilterApi);
+router.post("/filterCommission",verifyJWT, commissionFilterApi);
 
 
 // get commission giver wise

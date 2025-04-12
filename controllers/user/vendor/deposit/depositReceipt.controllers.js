@@ -57,7 +57,8 @@ const createDepositReceipt = async (req, res) => {
             amount: amountDeposited,
             drCr: "CR",
             status: paymentStatus,
-            details: { depositReceipt: depositReceipt._id }
+            details: { depositReceipt: depositReceipt._id },
+            createdAt : new Date()
         }
 
         wallet.balance += Number(amountDeposited);

@@ -95,7 +95,8 @@ const addTranstionData = async (req, res) => {
                     IFSC: "PUNB0094800"
                 },
                 commissionReceipt
-            }
+            },
+            createdAt : new Date()
         }
 
         giverWallet.balance -= Number(amount);
@@ -116,7 +117,8 @@ const addTranstionData = async (req, res) => {
                     IFSC: "PUNB0094800"
                 },
                 commissionReceipt
-            }
+            },
+            createdAt : new Date()
         }
         
       
@@ -174,7 +176,7 @@ const getLedger = async(req, res) =>{
                 else balance += amount;
     
                 return {
-                    date: new Date(txn.createdAt).toLocaleString(),
+                    date: new Date(txn.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
                     transactionId: txn.transactionId,
                     type: txn.type.replace("_", " "),
                     debit: txn.drCr === "DR" ? amount : "-",
@@ -233,7 +235,7 @@ const getLedgerByUserId = async(req, res) =>{
                 else balance += amount;
     
                 return {
-                    date: new Date(txn.createdAt).toLocaleString(),
+                    date: new Date(txn.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
                     transactionId: txn.transactionId,
                     type: txn.type.replace("_", " "),
                     debit: txn.drCr === "DR" ? amount : "-",
