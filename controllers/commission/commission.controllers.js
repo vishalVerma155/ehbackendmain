@@ -234,9 +234,21 @@ const getAllCommissionForAdmin = async (req, res) => {
 const commissionFilterApi = async (req, res) => {
 
     try {
+        const userId = req.user._id;
+        const role = req.user.role;
         let { integrationType, paymentStatus, startDate, endDate } = req.body;
 
-        const payload = {};
+        const payload = {
+        };
+
+        if(role === "vendor"){
+            payload.giverId = userId;
+        }
+
+        if(role === "affiliate"){
+            payload.getterId = userId;
+        }
+
 
         if (integrationType && integrationType.trim() !== "") {
             payload.integrationType = integrationType;
@@ -260,7 +272,7 @@ const commissionFilterApi = async (req, res) => {
 
         const filteredResult = await Commission.find(payload);
 
-        return res.status(200).json({ success: true, filteredResult: filteredResult.length > 0 ? filteredResult : "No result found" });
+        return res.status(200).json({ success: true, filteredResult });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
