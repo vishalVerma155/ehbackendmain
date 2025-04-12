@@ -17,7 +17,8 @@ const queryRouter = require('./routes/contectToAdmin/query.routes.js');
 const walletRouter = require('./routes/wallet/wallet.routes.js');
 const depositRouter = require('./routes/vendor/deposit/depositReceipt.routes.js');
 const mlmRouter = require('./routes/vendor/MLM/MLM.routes.js');
-const distributionRouter = require('./routes/vendor/commissionDistribution/commissionDistribution.routes.js')
+const distributionRouter = require('./routes/vendor/commissionDistribution/commissionDistribution.routes.js');
+const withdrawalRouter = require('./routes/vendor/withdrawal/withdrawal.routes.js')
 
 // Load config from env file
 require("dotenv").config();
@@ -41,6 +42,7 @@ app.use("/admin/group", groupRouter);
 app.use("/admin/impersonate", impersonateRouter);
 app.use("/vendor", programRouter);
 app.use("/vendor", campaignRouter);
+app.use("/withdrawal", withdrawalRouter);
 app.use("/commission", commissionRouter);
 app.use("/commission", distributionRouter);
 app.use('/contectAdmin', queryRouter);

@@ -19,7 +19,7 @@ const walletSchema = new mongoose.Schema({
             },
             type: {
                 type: String,
-                enum: ["deposit", "commission_payment", "commission_received"],
+                enum: ["deposit", "commission_payment", "commission_received", "withdrawal"],
                 required: true,
             },
             amount: {
@@ -50,6 +50,10 @@ const walletSchema = new mongoose.Schema({
                 depositReceipt: {
                     type: mongoose.Schema.Types.ObjectId,
                     ref: "PaymentDepositReceipt",
+                },
+                withdrawalRequest: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Withdrawal",
                 },
             },
             createdAt: { type: Date, default: Date.now },
