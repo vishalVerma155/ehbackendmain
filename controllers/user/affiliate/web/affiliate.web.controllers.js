@@ -365,7 +365,8 @@ const changeAffiliatePaswword = async (req, res) => {
          return res.status(401).json({success: false, error: "Please enter all fields" });
       }
 
-      const user = await User.findById(req.user._id);
+      const userId = req.user._id;
+      const user = await User.findById(userId);
 
       // compare password
       const isPasswordCorrect = await comparePassword(currentPassword, user.password);
