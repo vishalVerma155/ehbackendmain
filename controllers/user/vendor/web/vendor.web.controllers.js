@@ -123,6 +123,9 @@ const registerVendorWithGoogle = async (req, res) => {
                 return res.status(200).json({ success: true, Message: "Vendor has been sucessfully register.", vendor: newUser, token: accessToken, walletCreated: wallet.data.success });
             }
 
+            if (isUserExisted.role !== "vendor") {
+                return res.status(401).json({ success: false, error: "Invalid user." });
+            }
 
             const payload = {
                 _id: isUserExisted._id,
@@ -162,6 +165,10 @@ const loginVendor = async (req, res) => {
             return res.status(401).json({ success: false, error: "User is not existed." });
         }
 
+        if (user.role !== "vendor") {
+            return res.status(401).json({ success: false, error: "Invalid user" });
+        }
+
         // compare password
         const isPasswordCorrect = await comparePassword(password, user.password);
 
@@ -193,14 +200,13 @@ const getVendorProfile = async (req, res) => {
         const userId = req.user._id; // get user id
         // console.log(req.headers["user-agent"])
         const ua = req.headers['user-agent'];
-        console.log(ua);
         const parser = new UAParser(ua);
         const result = parser.getResult();
         const trackedMob = {
             browser: `${result.browser.name} - ${result.browser.version}`,
             os: `${result.os.name} - Version: ${result.os.version}`,
             mobileModel: result.device.model || '',
-          };
+        };
 
         if (!userId) {
             return res.status(404).json({ success: false, error: "User is not loged in" });

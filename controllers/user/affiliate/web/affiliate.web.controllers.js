@@ -4,6 +4,8 @@ const generateJWT = require('../../../../utils/jwt.js');
 const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js');
 const Settings = require('../../../../models/admin/settings/settings.model.js');
 const axios = require('axios');
+const UAParser = require('ua-parser-js');
+
 
 // register affiliate with email id and password
 const registerAffiliate = async (req, res) => {
@@ -172,6 +174,9 @@ const registerAffiliateWithGoogle = async (req, res) => {
             return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register.", affiliate: newUser, token: accessToken, walletCreated : wallet.data.success });
          }
 
+         if(isUserExisted.role !== "affiliate"){
+            return res.status(404).json({ success: false, error: "Invalid user" });
+         }
 
          const payload = {
             _id: isUserExisted._id,
@@ -208,6 +213,10 @@ const loginAffiliate = async (req, res) => {
 
       if (!user) {
          return res.status(401).json({success: false, error: "User is not existed." });
+      }
+
+      if(user.role !== "affiliate"){
+         return res.status(401).json({success: false, error: "Invalid user" });
       }
 
       // compare password
@@ -376,7 +385,32 @@ const changeAffiliatePaswword = async (req, res) => {
    }
 }
 
+const getAffiliateProfile = async (req, res) => {
+   try {
+       const userId = req.user._id; // get user id
+       // console.log(req.headers["user-agent"])
+       const ua = req.headers['user-agent'];
+       const parser = new UAParser(ua);
+       const result = parser.getResult();
+       const trackedMob = {
+           browser: `${result.browser.name} - ${result.browser.version}`,
+           os: `${result.os.name} - Version: ${result.os.version}`,
+           mobileModel: result.device.model || '',
+       };
+
+       if (!userId) {
+           return res.status(404).json({ success: false, error: "User is not loged in" });
+       }
+
+       const affiliateProfile = await User.findById(userId).select("-password -referrer -referredUsers "); // find and delete user
+
+       return res.status(200).json({ success: true, Message: "Affiliate has been sucessfully fetched", affiliateProfile, trackedMob }); // return response
+   } catch (error) {
+       return res.status(500).json({ success: false, error: error.message });
+   }
+}
 
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword, getUserByUserId, getAllAffiliates };
+
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword, getUserByUserId, getAllAffiliates, getAffiliateProfile };
