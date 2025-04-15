@@ -15,7 +15,6 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: "earningHandle", // Folder name in Cloudinary
-    allowed_formats: ["jpg", "png", "jpeg"], // Allowed file formats
     transformation: [{ width: 500, height: 500, crop: "limit" }], // Optional image transformation
   },
 });

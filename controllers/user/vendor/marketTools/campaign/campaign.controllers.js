@@ -104,20 +104,18 @@ const getCampainListForVendor = async (req, res) => {
         const { name, status, category } = req.body;
         
 
-        if (name) {
+        if (name && name.trim() !== "") {
             filter.name = { $regex: name, $options: "i" }; // case-insensitive search
         }
 
-        if (status) {
+        if (status && status.trim() !== "") {
             filter.status = status;
         }
 
-        if (category) {
+        if (category && category.trim() !== "") {
             const categoriesArray = category.split(",");
             filter.categories = { $in: categoriesArray };
         }
-
-        console.log(filter)
 
         const campaigns = await Campaign.find(filter);
 
