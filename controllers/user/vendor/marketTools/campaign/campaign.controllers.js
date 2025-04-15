@@ -91,14 +91,37 @@ const editCampaign = async (req, res) => {
 
 const getCampainListForVendor = async (req, res) => {
     try {
+
+        const filter = {};
         const userId = req.user._id;
 
         if (!userId) {
             return res.status(404).json({ success: false, error: "User is not loged in" });
         }
 
-        const campaignList = await Campaign.find({ userId });
-        return res.status(200).json({ success: true, campaignList });
+        filter.userId = userId;
+
+        const { name, status, category } = req.body;
+        
+
+        if (name) {
+            filter.name = { $regex: name, $options: "i" }; // case-insensitive search
+        }
+
+        if (status) {
+            filter.status = status;
+        }
+
+        if (category) {
+            const categoriesArray = category.split(",");
+            filter.categories = { $in: categoriesArray };
+        }
+
+        console.log(filter)
+
+        const campaigns = await Campaign.find(filter);
+
+        return res.status(200).json({ success: true, campaignList : campaigns });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
