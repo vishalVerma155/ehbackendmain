@@ -18,7 +18,7 @@ router.patch("/editCampaign/:campaignId", verifyJWT,upload.single('campaignImage
 router.get("/getAllCampaignForAdmin", verifyJWT, getAllCampaignsForAdmin);
 
 // get all program for vendor
-router.get("/getAllCampaignForVendor", verifyJWT, getCampainListForVendor);
+router.post("/getAllCampaignForVendor", verifyJWT, getCampainListForVendor);
 
 // get particular program
 router.get("/getCampaign/:campaignId",verifyJWT, getCampaign);
