@@ -265,6 +265,8 @@ const editAffiliate = async (req, res) => {
 
       const { firstName, lastName, country, address } = req.body;
       const user = req.user._id;
+      const img = req.file?.path || undefined; // get image
+
 
       if (!user) {
          return res.status(500).json({ success: false, error: "Affiliate is not loged in" });
@@ -286,6 +288,10 @@ const editAffiliate = async (req, res) => {
       if (address) {
          payload.address = address;
       }
+
+      if(img){
+         payload.image = img;
+     }
 
       const updatedAffiliate = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
 

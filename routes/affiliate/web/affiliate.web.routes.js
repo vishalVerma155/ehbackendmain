@@ -2,6 +2,7 @@
 const express = require('express');
 const verifyJWT = require('../../../middleware/authMiddleware.js');
 const {registerAffiliateWithGoogle, generateAffiliateLink, registerAffiliate,loginAffiliate, editAffiliate, getUserByUserId, getAffiliateProfile, changeAffiliatePaswword, getCurrUserAffTree } = require('../../../controllers/user/affiliate/web/affiliate.web.controllers.js');
+const {upload} = require('../../../utils/multer.js')
 
 
 
@@ -21,7 +22,7 @@ router.post("/loginAffiliate", loginAffiliate);
 router.post("/generateAffiliateLink", generateAffiliateLink);
 
 // edit affiliate
-router.patch("/editAffiliate", verifyJWT, editAffiliate);
+router.patch("/editAffiliate", verifyJWT, upload.single('userImage'), editAffiliate);
 
 // get affiliate by affiliate id
 router.get("/getAffiliate/:userId", verifyJWT, getUserByUserId);

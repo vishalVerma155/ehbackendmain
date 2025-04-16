@@ -74,6 +74,9 @@ const userSchema = new mongoose.Schema({
     address: {
         type: String
     },
+    image: {
+        type: String
+    },
     referrer: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",

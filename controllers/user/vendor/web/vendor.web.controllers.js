@@ -225,6 +225,8 @@ const editVendor = async (req, res) => {
     try {
         const { firstName, lastName, storeName, country, address } = req.body;
         const user = req.user._id;
+        const img = req.file?.path || undefined; // get image
+
 
         if (!user || user && user.trim() === "") {
             return res.status(404).json({ success: false, error: "Vendor is not loged in" });
@@ -250,6 +252,10 @@ const editVendor = async (req, res) => {
 
         if (address) {
             payload.address = address;
+        }
+
+        if(img){
+            payload.image = img;
         }
 
         const updatedVendor = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });

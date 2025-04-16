@@ -2,6 +2,7 @@
 const express = require('express');
 const verifyJWT = require('../../../middleware/authMiddleware.js');
 const {registerVendor, registerVendorWithGoogle, editVendor, loginVendor, changeVendorPassword, getVendorProfile} = require('../../../controllers/user/vendor/web/vendor.web.controllers.js');
+const {upload} = require('../../../utils/multer.js')
 
 
 
@@ -17,7 +18,7 @@ router.post("/registerVendorWithGoogle",registerVendorWithGoogle);
 router.post("/loginVendor", loginVendor);
 
 // edit vendor
-router.patch("/editVendor",verifyJWT, editVendor);
+router.patch("/editVendor",verifyJWT,upload.single('userImage'), editVendor);
 
 // get vendor profile
 router.get("/getVendor",verifyJWT, getVendorProfile);
