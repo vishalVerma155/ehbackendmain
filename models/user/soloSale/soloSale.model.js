@@ -1,10 +1,8 @@
 const mongoose = require("mongoose");
 
-const soloSaleSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "user", // Assuming you have a User model
-    required: true,
+const affiliateClubSchema = new mongoose.Schema({
+  clubName : {
+    type : String
   },
   commissionPercentage: {
     type: Number,

@@ -5,6 +5,8 @@ const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js')
 const Settings = require('../../../../models/admin/settings/settings.model.js');
 const axios = require('axios');
 const UAParser = require('ua-parser-js');
+const mongoose = require('mongoose');
+
 
 
 // register affiliate with email id and password
@@ -411,7 +413,87 @@ const getAffiliateProfile = async (req, res) => {
    }
 }
 
+const getCurrUserAffTree = async(req, res) =>{
+   try {
+      const userId = req.user._id;
+
+      if(req.user.role !== "affiliate"){
+         return res.status(404).json({success : false, error: "Invalid user for get affiliate tree" });
+      }
+
+      const affiliateTree = await User.aggregate([
+          {
+              $match: { _id: new mongoose.Types.ObjectId(userId) } // Find the root user
+          },
+          {
+              $graphLookup: {
+                  from: "users",           // Collection to search (same collection)
+                  startWith: "$_id",       // Start from the given user ID
+                  connectFromField: "_id", // The field in 'users' that should be matched
+                  connectToField: "referrer", // The field in 'users' referring to another user
+                  as: "referrals",        // Store results in 'referrals' array
+                  depthField: "depth",     // Stores the depth level of each referral
+
+              }
+          },
+          {
+              $project: {
+                  firstName: 1,
+                  lastName: 1,
+                  email: 1,
+                  referrals: {
+                      _id: 1,
+                      firstName: 1,
+                      lastName: 1,
+                      email: 1,
+                      referrer: 1
+                  }
+              }
+          }
+      ]);
+
+
+      if (!affiliateTree.length) {
+          return res.status(404).json({success : false, error: "User not found" });
+      }
+
+      // Convert the flat array into a hierarchical tree
+      const structuredTree = buildAffiliateTree(affiliateTree[0]);
+
+      return res.status(200).json({success : true, message : "Affiliate tree has been successfully fetched.", structuredTree})
+  } catch (error) {
+      res.status(500).json({success : false, error: error.message });
+  }
+}
+
+// Function to build a nested affiliate tree
+function buildAffiliateTree(user) {
+   const userMap = new Map(); // Map to store users by _id
+
+   // Add the root user to the map
+   userMap.set(user._id.toString(), { ...user, referrals: [] });
+
+   // Map all referrals
+   user.referrals.forEach(referral => {
+       userMap.set(referral._id.toString(), { ...referral, referrals: [] });
+   });
 
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword, getUserByUserId, getAllAffiliates, getAffiliateProfile };
+   // Assign each referral to its correct parent
+   user.referrals.forEach(referral => {
+       if (referral.referrer) {
+           const parent = userMap.get(referral.referrer.toString());
+           if (parent) {
+               parent.referrals.push(userMap.get(referral._id.toString()));
+           }
+       }
+   });
+
+   // Return the root user with a nested structure
+   return userMap.get(user._id.toString());
+}
+
+
+
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword, getUserByUserId, getAllAffiliates, getAffiliateProfile, getCurrUserAffTree };
