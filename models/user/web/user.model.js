@@ -53,6 +53,15 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    soloSale: {
+        type: Boolean,
+        trim: true,
+        default : false
+    },
+    clubName: {
+        type: String,
+        trim: true,
+    },
     googleId: {
         type: String,
         trim: true,

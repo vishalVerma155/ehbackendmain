@@ -248,12 +248,23 @@ const loginAffiliate = async (req, res) => {
 }
 
 // generate affiliate link
-const generateAffiliateLink = (req, res) => {
+const generateAffiliateLink = async (req, res) => {
    try {
-      const { productUrl, affiliateId } = req.body; // get website link
+      const afId = req.user._id;
+
+      if(!afId){
+         return res.status(400).json({success : false, error : "User is not loged in"})
+      }
+      const affiliate = await User.findById(afId);
+
+      if(!affiliate){
+         return res.status(400).json({success : false, error : "User not found"})
+      }
+      const affiliateId = affiliate.userId;
+      const  productUrl = "http://localhost:5173/register"; // get website link
       const url = new URL(productUrl); // make new url
       url.searchParams.append("aff_id", affiliateId); // add affiliate id in url
-      return res.status(200).json(url); // return update link
+      return res.status(200).json({success : true, referalLink : url}); // return update link
    } catch (error) {
       res.status(500).json({ success: false, error: error.message }); // 
    }

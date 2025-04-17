@@ -19,7 +19,7 @@ router.post("/registerAffiliateWithGoogle",registerAffiliateWithGoogle);
 router.post("/loginAffiliate", loginAffiliate);
 
 // generate affiliate link
-router.post("/generateAffiliateLink", generateAffiliateLink);
+router.get("/generateAffiliateLink",verifyJWT, generateAffiliateLink);
 
 // edit affiliate
 router.patch("/editAffiliate", verifyJWT, upload.single('userImage'), editAffiliate);
