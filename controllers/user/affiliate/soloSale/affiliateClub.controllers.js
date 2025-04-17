@@ -1,4 +1,4 @@
-const SoloSale = require('../../../../models/user/soloSale/soloSale.model.js');
+const SoloSale = require('../../../../models/user/soloSale/affiliateClub.model.js');
 
 const createSoloSale = async(req, res) =>{
     try {

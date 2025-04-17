@@ -1,7 +1,7 @@
 
 const express = require('express');
 const verifyJWT = require('../../../../middleware/authMiddleware.js');
-const {createCampaign, editCampaign, getAllCampaignsForAdmin, getCampaign, getCampainListForVendor, deleteCampaign} = require('../../../../controllers/user/vendor/marketTools/campaign/campaign.controllers.js');
+const {createCampaign, editCampaign, getAllCampaignsForAdmin, getCampaign, getCampainListForVendor,getCampainListForAffiliate, deleteCampaign} = require('../../../../controllers/user/vendor/marketTools/campaign/campaign.controllers.js');
 const {upload} = require('../../../../utils/multer.js');
 
 
@@ -19,6 +19,9 @@ router.get("/getAllCampaignForAdmin", verifyJWT, getAllCampaignsForAdmin);
 
 // get all program for vendor
 router.post("/getAllCampaignForVendor", verifyJWT, getCampainListForVendor);
+
+// get all campaigns for affiliates
+router.post("/getAllCampaignsForAffiliate", verifyJWT, getCampainListForAffiliate);
 
 // get particular program
 router.get("/getCampaign/:campaignId",verifyJWT, getCampaign);

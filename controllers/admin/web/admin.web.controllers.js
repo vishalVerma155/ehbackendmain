@@ -101,6 +101,10 @@ const getAllUsersList = async (req, res) => {
 
     try {
 
+        if(req.user.role !== "admin"){
+            return res.status(400).json({success : false, error : "Only admin can do this"});
+        }
+
         let all_Users_List;
         const { userType } = req.body;
         if (!userType) {

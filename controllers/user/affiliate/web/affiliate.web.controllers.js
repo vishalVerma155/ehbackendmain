@@ -263,7 +263,7 @@ const generateAffiliateLink = (req, res) => {
 const editAffiliate = async (req, res) => {
    try {
 
-      const { firstName, lastName, country, address } = req.body;
+      const { firstName, lastName, country, address} = req.body;
       const user = req.user._id;
       const img = req.file?.path || undefined; // get image
 

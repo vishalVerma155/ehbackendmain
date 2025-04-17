@@ -126,6 +126,38 @@ const getCampainListForVendor = async (req, res) => {
     }
 }
 
+
+const getCampainListForAffiliate = async (req, res) => {
+    try {
+
+        if(req.user.role !== "affiliate"){
+            return res.status(400).json({success : false, error : "Only affiliate can get this"})
+        }
+        const filter = {};
+
+        filter.status = "public";
+
+        const { name, category } = req.body;
+        
+
+        if (name && name.trim() !== "") {
+            filter.name = { $regex: name, $options: "i" }; // case-insensitive search
+        }
+
+        if (category && category.trim() !== "") {
+            const categoriesArray = category.split(",");
+            filter.categories = { $in: categoriesArray };
+        }
+
+        const campaigns = await Campaign.find(filter);
+
+        return res.status(200).json({ success: true, campaignList : campaigns });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
 const getCampaign = async (req, res) => {
 
     try {
@@ -178,4 +210,4 @@ const deleteCampaign = async (req, res) => {
     }
 }
 
-module.exports = { createCampaign, getAllCampaignsForAdmin, getCampainListForVendor, editCampaign, deleteCampaign, getCampaign };
+module.exports = { createCampaign, getAllCampaignsForAdmin, getCampainListForVendor, editCampaign, deleteCampaign, getCampaign, getCampainListForAffiliate };
