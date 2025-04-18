@@ -14,13 +14,18 @@ const createCampaign = async (req, res) => {
             return res.status(404).json({ success: false, error: "user id not found" });
         }
 
+
         const { toolType, name, campaignTargetLink, linkTitle } = req.body;
 
+
+        console.log(req.body)
         const isBlank = [toolType, name, campaignTargetLink, linkTitle].some((field) => field.trim() === "");
+
 
         if (isBlank) {
             return res.status(404).json({ success: false, error: "Tool type, Name, Campaign Target Link, Product Price, Link Title are compulsary" });
         }
+
 
         const data = req.body;
 

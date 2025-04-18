@@ -274,7 +274,7 @@ const generateAffiliateLink = async (req, res) => {
 const editAffiliate = async (req, res) => {
    try {
 
-      const { firstName, lastName, country, address} = req.body;
+      const { firstName, lastName, country, address, soloSale, clubName} = req.body;
       const user = req.user._id;
       const img = req.file?.path || undefined; // get image
 
@@ -302,6 +302,14 @@ const editAffiliate = async (req, res) => {
 
       if(img){
          payload.image = img;
+     }
+
+     if(soloSale && soloSale.trim() !== ""){
+      payload.soloSale = soloSale;
+     }
+
+     if(clubName && clubName.trim() !== ""){
+      payload.clubName = clubName;
      }
 
       const updatedAffiliate = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });

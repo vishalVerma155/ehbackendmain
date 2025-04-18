@@ -8,16 +8,16 @@ const createCommission = async (req, res) => {
     try {
 
         const { type, totalSaleAmount, commissionPercentage, integrationType, transactionId } = req.body;
-        
+
         // console.log(req.body);
 
         const isBlank = [type, integrationType, transactionId].some((field) => field.trim() === "");
-        
+
 
         if (isBlank) {
             return res.status(404).json({ success: false, error: " Type, Total Sale Amount, Commission Percentage, Integration Type, Transaction Id are compulsary" });
         }
-       
+
 
         let { giverId, getterId, giverType } = req.body;
 
@@ -25,14 +25,14 @@ const createCommission = async (req, res) => {
         let getter = undefined;
         let getterAdmin = undefined;
         let giverAdmin = undefined;
-        
+
 
         if (giverType === "vendor") {
-        
+
             giver = await User.findById(giverId);
-       
+
             getterAdmin = await Admin.findById(getterId);
-           
+
             if (!giver) {
                 return res.status(404).json({ success: false, error: "Commission giver not found" });
             }
@@ -56,7 +56,7 @@ const createCommission = async (req, res) => {
         }
 
         const commission = totalSaleAmount * (commissionPercentage / 100);
-        
+
         const commissionReceipt = new Commission({
             getterId: getter ? getter : undefined,
             giverId: giver ? giver : undefined,
@@ -69,15 +69,15 @@ const createCommission = async (req, res) => {
             integrationType,
             transactionId
         });
-        
+
         await commissionReceipt.save();
-        
+
         if (!commissionReceipt) {
             return res.status(500).json({ success: false, error: "error in creating commission receipt" });
         }
-        
+
         let populatedCommissionReceipt = undefined;
-        
+
         if (giverType === "vendor") {
             populatedCommissionReceipt = await Commission.findById(commissionReceipt._id)
                 .populate("giverId", "firstName lastName email userId role")
@@ -113,12 +113,12 @@ const editCommission = async (req, res) => {
 
         const payload = {};
 
-        if ( paymentStatus && paymentStatus.trim() !== "") {
+        if (paymentStatus && paymentStatus.trim() !== "") {
             payload.paymentStatus = paymentStatus;
         }
 
 
-        if ( finalStatus && finalStatus.trim() !== "") {
+        if (finalStatus && finalStatus.trim() !== "") {
             payload.finalStatus = finalStatus;
         }
 
@@ -147,7 +147,7 @@ const editCommission = async (req, res) => {
 
             }
 
-            if (comm.type === "affiliate commission") {
+            if (comm.type === "affiliate commission" || comm.type === "affiliate solo commission") {
 
                 const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", {
                     transactionId: "xyz",
@@ -173,21 +173,28 @@ const editCommission = async (req, res) => {
 
 const getCommissionGiverWise = async (req, res) => {
     try {
-        const giverId =  req.user._id;
+        const giverId = req.user._id;
         const role = req.user.role;
 
         if (!giverId) {
             return res.status(404).json({ success: false, error: "User is not loged in." });
         }
 
-        if(role === "admin"){
+        if (role === "admin") {
 
-            const giverCommission = await Commission.find({ giverAdmin : giverId });
+            const giverCommission = await Commission.find({ giverAdmin: giverId })
+                .populate("getterId", "firstName lastName email userId role")
+                .populate("giverAdmin", "fullName email userId role")
+                .lean();
+
 
             return res.status(200).json({ success: true, given_Commission: giverCommission });
         }
 
-        const giverCommission = await Commission.find({ giverId });
+        const giverCommission = await Commission.find({ giverId })
+            .populate("giverId", "firstName lastName email userId role")
+            .populate("getterAdmin", "fullName email userId role")
+            .lean();
 
         return res.status(200).json({ success: true, given_Commission: giverCommission });
 
@@ -198,19 +205,25 @@ const getCommissionGiverWise = async (req, res) => {
 
 const getCommissionGetterWise = async (req, res) => {
     try {
-        const getterId =  req.user._id;
+        const getterId = req.user._id;
         const role = req.user.role;
 
         if (!getterId) {
             return res.status(404).json({ success: false, error: "User is not loged in" });
         }
 
-        if(role === "admin"){
-            const getterCommission = await Commission.find({ getterAdmin : getterId });
+        if (role === "admin") {
+            const getterCommission = await Commission.find({ getterAdmin: getterId })
+                .populate("giverId", "firstName lastName email userId role")
+                .populate("getterAdmin", "fullName email userId role")
+                .lean();
             return res.status(200).json({ success: true, getter_Commission: getterCommission });
         }
 
-        const getterCommission = await Commission.find({ getterId });
+        const getterCommission = await Commission.find({ getterId })
+            .populate("getterId", "firstName lastName email userId role")
+            .populate("giverAdmin", "fullName email userId role")
+            .lean();
 
         return res.status(200).json({ success: true, getter_Commission: getterCommission });
 
@@ -241,11 +254,11 @@ const commissionFilterApi = async (req, res) => {
         const payload = {
         };
 
-        if(role === "vendor"){
+        if (role === "vendor") {
             payload.giverId = userId;
         }
 
-        if(role === "affiliate"){
+        if (role === "affiliate") {
             payload.getterId = userId;
         }
 
