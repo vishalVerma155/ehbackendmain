@@ -1,6 +1,7 @@
 const Campaign = require('../../../../../models/user/vendor/marketTools/campaigns/campain.model.js');
 const User = require('../../../../../models/user/web/user.model.js');
 const Program = require('../../../../../models/user/vendor/marketTools/programs/program.model.js')
+const {encryprDecryptMethod} = require("../../../../../utils/crypto.js");
 
 const createCampaign = async (req, res) => {
 
@@ -92,6 +93,59 @@ const editCampaign = async (req, res) => {
         return res.status(500).json({ success: false, error: error.message });
     }
 
+}
+
+const urlEncode = async(req, res) =>{
+    try {
+        const affiliateId = req.user._id;
+        
+        const {productId, campaignTargetLink} = req.body;
+        
+        const payload = JSON.stringify({ affiliateId, productId, campaignTargetLink });
+       
+        const encrypted = encryprDecryptMethod(payload, 'encrypt');
+       
+
+        return res.status(200).json({success : true, url :  `http://localhost:4500/vendor/track?data=${encodeURIComponent(encrypted)}` });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });  
+    }
+}
+
+const tracker = async(req, res) =>{
+    
+    console.log("Enter 1");
+    const { data } = req.query;
+
+    if (!data) return res.status(400).send("Invalid tracking link");
+
+    try {
+        const decrypted = encryprDecryptMethod(decodeURIComponent(data), 'decrypt');
+        const { affiliateId, productId, campaignTargetLink } = JSON.parse(decrypted);
+
+        // // Log the click
+        // await ClickModel.create({
+        //     affiliateId,
+        //     productId,
+        //     timestamp: new Date(),
+        //     ip: req.ip,
+        //     userAgent: req.headers['user-agent']
+        // });
+
+        console.log("Affiliate id : ", affiliateId, " , Product Id : ", productId, " , Link : ", campaignTargetLink);
+        // Find product link
+        // const product = await ProductModel.findById(productId);
+        // if (!product || !product.url) {
+        //     return res.status(404).send("Product not found");
+        // }
+
+        // Redirect
+        return res.redirect(campaignTargetLink);
+
+    } catch (err) {
+        console.error("Tracking error:", err);
+        return res.status(500).send("Something went wrong.");
+    }
 }
 
 const getCampainListForVendor = async (req, res) => {
@@ -215,4 +269,4 @@ const deleteCampaign = async (req, res) => {
     }
 }
 
-module.exports = { createCampaign, getAllCampaignsForAdmin, getCampainListForVendor, editCampaign, deleteCampaign, getCampaign, getCampainListForAffiliate };
+module.exports = { createCampaign, getAllCampaignsForAdmin, getCampainListForVendor, editCampaign, deleteCampaign, getCampaign, getCampainListForAffiliate, tracker, urlEncode };

@@ -19,7 +19,8 @@ const depositRouter = require('./routes/vendor/deposit/depositReceipt.routes.js'
 const mlmRouter = require('./routes/vendor/MLM/MLM.routes.js');
 const distributionRouter = require('./routes/vendor/commissionDistribution/commissionDistribution.routes.js');
 const withdrawalRouter = require('./routes/vendor/withdrawal/withdrawal.routes.js');
-const clubRouter = require("./routes/affiliate/affiliateClub/affiliateClub.routes.js")
+const clubRouter = require("./routes/affiliate/affiliateClub/affiliateClub.routes.js");
+
 
 // Load config from env file
 require("dotenv").config();

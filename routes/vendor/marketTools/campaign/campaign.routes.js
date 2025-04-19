@@ -1,8 +1,9 @@
 
 const express = require('express');
 const verifyJWT = require('../../../../middleware/authMiddleware.js');
-const {createCampaign, editCampaign, getAllCampaignsForAdmin, getCampaign, getCampainListForVendor,getCampainListForAffiliate, deleteCampaign} = require('../../../../controllers/user/vendor/marketTools/campaign/campaign.controllers.js');
+const {createCampaign, editCampaign, getAllCampaignsForAdmin, getCampaign, getCampainListForVendor,getCampainListForAffiliate, deleteCampaign, tracker, urlEncode} = require('../../../../controllers/user/vendor/marketTools/campaign/campaign.controllers.js');
 const {upload} = require('../../../../utils/multer.js');
+
 
 
 
@@ -28,6 +29,10 @@ router.get("/getCampaign/:campaignId",verifyJWT, getCampaign);
 
 // delete marketing program
 router.delete("/deleteCampaign/:campaignId", verifyJWT, deleteCampaign);
+
+router.get("/track", tracker);
+
+router.post("/madeEncodeLink",verifyJWT, urlEncode );
 
 
 module.exports = router;
