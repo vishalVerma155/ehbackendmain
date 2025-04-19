@@ -91,11 +91,45 @@ const loginAdmin = async (req, res) => {
     }
 };
 
-const editAdmin = async (req, res) => {
-    const data = req.body;
-    console.log(data);
-    res.status(200).json({ Message: "Admin has been  sucessfully Loged in.", Admin: data });
-}
+// const editAdmin = async (req, res) => {
+//     const data = req.body;
+//     console.log(data);
+//     res.status(200).json({ Message: "Admin has been  sucessfully Loged in.", Admin: data });
+// }
+
+const changeAdminPassword = async (req, res) => {
+    try {
+
+        if(req.user.role !== "admin"){
+          return res.status(401).json({success: false, error: "Only admin can do this" });
+        }
+
+       const { currentPassword, newPassword } = req.body; // take details
+ 
+       if (!currentPassword || currentPassword && currentPassword.trim() === "" || !newPassword || newPassword && newPassword.trim() === "") {
+          return res.status(401).json({success: false, error: "Please enter all fields" });
+       }
+ 
+       const userId = req.user._id;
+       const admin = await Admin.findById(userId);
+ 
+       // compare password
+       const isPasswordCorrect = await comparePassword(currentPassword, admin.password);
+ 
+       if (!isPasswordCorrect) {
+          return res.status(401).json({success: false, error: "password is not matched" });
+       }
+ 
+       const newHashedPassword = await hashPassword(newPassword); // hash new password
+       admin.password = newHashedPassword;
+ 
+       await admin.save(); // save user password
+ 
+       return res.status(200).json({success: true, Message: "Password has been chenged" });
+    } catch (error) {
+       return res.status(500).json({ success: false, error: error.message });
+    }
+ }
 
 const getAllUsersList = async (req, res) => {
 
@@ -213,4 +247,4 @@ function buildAffiliateTree(user) {
 // auto login in any user account
 const autoLogin = (req, res) => {};
 
-module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, editAdmin, getAffiliateTree };
+module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree };
