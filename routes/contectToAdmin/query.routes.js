@@ -10,10 +10,10 @@ const router = express.Router();
 router.post("/registerQuery", verifyJWT, upload.single("attachment"), registerQueries);
 
 // view all queries
-router.get("/getAllQueriesAdmin", verifyJWT, viewQueris);
+router.post("/getAllQueriesAdmin", verifyJWT, viewQueris);
 
 // view all queries for user
-router.get("/getAllQueriesUser", verifyJWT, viewQuerisOfUser);
+router.post("/getAllQueriesUser", verifyJWT, viewQuerisOfUser);
 
 // view particular query
 router.get("/getQuery/:queryId", verifyJWT, viewSingleQuery);

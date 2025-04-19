@@ -39,7 +39,27 @@ const registerQueries = async (req, res) => {
 
 const viewQueris = async (req, res) => {
     try {
-        const queries = await Query.find(); // get all queries
+        if(req.user.role !== "admin"){
+            return res.status(404).json({ success: false, error: "Only admin can do this" });
+        }
+        const {status, firstName, phoneNumber} = req.body;
+
+        const payload = {};
+
+        if(status && status.trim() !== ""){
+            payload.status = status;
+        }
+
+        if(firstName && firstName.trim() !== ""){
+            payload.firstName = firstName;
+        }
+
+        if(phoneNumber && phoneNumber.trim() !== ""){
+            payload.phoneNumber = phoneNumber;
+        }
+
+
+        const queries = await Query.find(payload).populate("userId", "firstName userId email role"); // get all queries
         return res.status(200).json({ success: true, All_Queries: queries });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
@@ -54,7 +74,18 @@ const viewQuerisOfUser = async (req, res) => {
             return res.status(404).json({ success: false, error: "User id not found" }); // subject and body
         }
 
-        const queries = await Query.find({userId}); // get all queries
+        const {status} = req.body;
+
+        const payload = {};
+
+        payload.userId = userId;
+
+        if(status && status.trim() !== ""){
+            payload.status = status;
+        }
+
+
+        const queries = await Query.find(payload).populate("userId", "firstName userId email role");; // get all queries
         return res.status(200).json({ success: true, All_Queries_Of_User: queries });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
@@ -71,7 +102,7 @@ const viewSingleQuery = async (req, res) => {
         if (!queryId) {
             return res.status(404).json({ success: false, error: "Query id not found" });
         }
-        const query = await Query.findById(queryId); // find query
+        const query = await Query.findById(queryId).populate("userId", "firstName userId email role");; // find query
     
         if (!query) {
             return res.status(404).json({ success: false, error: "Query not found. Wrong query id" })
@@ -88,6 +119,10 @@ const viewSingleQuery = async (req, res) => {
 const editQuery = async (req, res) => {
 
     try {
+
+        if(req.user.role !== "admin"){
+            return res.status(404).json({ success: false, error: "Only admin can do this" });
+        }
         const queryId = req.params.queryId; // get query id
         const { status } = req.body;
     

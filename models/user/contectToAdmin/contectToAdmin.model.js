@@ -40,8 +40,8 @@ const querySchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["solved", "unsolved"],
-            default: "unsolved"
+            enum: ["Open", "Resolved"],
+            default: "Resolved"
         },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
