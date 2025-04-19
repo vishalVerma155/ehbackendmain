@@ -17,10 +17,10 @@ router.post("/addDataToWallet", addTranstionData);
 router.get("/getCurrUserWallet", verifyJWT, getWallterCurrUser);
 
 // get user ledger 
-router.get("/getLedger", verifyJWT, getLedger);
+router.post("/getLedger", verifyJWT, getLedger);
 
 // get ledger by user id
-router.get("/getLedgerByUserId/:userId", verifyJWT, getLedgerByUserId);
+router.post("/getLedgerByUserId/:userId", verifyJWT, getLedgerByUserId);
 
 
 module.exports = router;
