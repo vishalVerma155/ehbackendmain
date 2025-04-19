@@ -64,7 +64,23 @@ const getMarketingProgram = async (req, res) => {
 const getAllMarketingProgramForAdmin = async (req, res) => {
 
     try {
-        const programs = await MarketingProgram.find()
+
+        if(req.user.role !== "admin"){
+            return res.status(404).json({success : false, error : "Only admin can do this"})
+        }
+        const {userId, programName} = req.body;
+
+        const payload = {};
+
+        if(userId && userId.trim() !== ""){
+            payload.userId = userId;
+        }
+
+        
+        if(programName && programName.trim() !== ""){
+            payload.programName = programName;
+        }
+        const programs = await MarketingProgram.find(payload)
             .populate("mlm", "totalMLMLevel totalCommission adminCommission commissions")
             .lean();;
         return res.status(200).json({ success: true, programs });

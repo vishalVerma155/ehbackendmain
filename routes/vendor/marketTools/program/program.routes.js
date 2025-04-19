@@ -14,7 +14,7 @@ router.post("/createMarketingProgram", verifyJWT, createMarketingProgram);
 router.patch("/editMarketingProgram/:programId", verifyJWT, editMarketingProgram);
 
 // get all programs
-router.get("/getAllMarketingProgramsForAdmin", verifyJWT, getAllMarketingProgramForAdmin);
+router.post("/getAllMarketingProgramsForAdmin", verifyJWT, getAllMarketingProgramForAdmin);
 
 // get all program for vendor
 router.get("/getAllMarketingProgramsForVendor", verifyJWT, getAllMarketingProgramForVendor);
