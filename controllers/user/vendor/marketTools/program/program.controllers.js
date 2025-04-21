@@ -1,5 +1,6 @@
 const MarketingProgram = require('../../../../../models/user/vendor/marketTools/programs/program.model.js');
 const MLMCommission = require('../../../../../models/user/vendor/MLM/mlmProgram.model.js');
+const User = require('../../../../../models/user/web/user.model.js');
 
 const createMarketingProgram = async (req, res) => {
 
@@ -65,24 +66,27 @@ const getAllMarketingProgramForAdmin = async (req, res) => {
 
     try {
 
-        if(req.user.role !== "admin"){
-            return res.status(404).json({success : false, error : "Only admin can do this"})
+        if (req.user.role !== "admin") {
+            return res.status(404).json({ success: false, error: "Only admin can do this" })
         }
-        const {userId, programName} = req.body;
+        const { userId, programName } = req.body;
 
         const payload = {};
 
-        if(userId && userId.trim() !== ""){
+        if (userId && userId.trim() !== "") {
             payload.userId = userId;
         }
 
-        
-        if(programName && programName.trim() !== ""){
+
+        if (programName && programName.trim() !== "") {
             payload.programName = programName;
         }
+
         const programs = await MarketingProgram.find(payload)
+            .populate("userId", "firstName userId")
             .populate("mlm", "totalMLMLevel totalCommission adminCommission commissions")
-            .lean();;
+            .lean();
+
         return res.status(200).json({ success: true, programs });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });

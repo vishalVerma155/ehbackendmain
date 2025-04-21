@@ -7,9 +7,9 @@ const marketingProgramSchema = new mongoose.Schema({
         trim: true,
     },
     userId: {
-        type: String,
-        required: true,
-        trim: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user", // Reference to user model
+        required: true
     },
     commissionType: {
         type: String,
