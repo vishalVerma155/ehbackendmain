@@ -24,7 +24,7 @@ const createDepositReceipt = async (req, res) => {
             return res.status(400).json({ success: false, error: "Amount should be greater then 0" });
         }
 
-        if (bankDetails && bankDetails.trim() === "" || upiId && upiId.trim() === "") {
+        if ((!bankDetails || bankDetails && bankDetails.trim() === "") && (!upiId || upiId && upiId.trim() === "")) {
             return res.status(400).json({ success: false, error: "Atleast one payment method is compulsary" });
         }
 
@@ -90,7 +90,32 @@ const createDepositReceipt = async (req, res) => {
 
 const getAllReceiptForAdmin = async(req, res) =>{
     try {
-        const all_Receipts = await PaymentDepositReceipt.find();
+        if(req.user.role !== "admin"){
+        return res.status(404).json({ success: false, error: "Only admin can do this." }); 
+        }
+
+        
+        const {paymentMethod, paymentStatus, transactionId} = req.body;
+
+        const payload = {};
+
+        if(paymentMethod && paymentMethod.trim() !== ""){
+            payload.paymentMethod = paymentMethod;
+        }
+
+        if(paymentStatus && paymentStatus.trim() !== ""){
+            payload.paymentStatus = paymentStatus;
+        }
+
+        if(transactionId && transactionId.trim() !== ""){
+            payload.transactionId = transactionId;
+        }
+
+        const all_Receipts = await PaymentDepositReceipt.find(payload)
+        .populate("userId", "firstName userId role")
+        .sort({ updatedAt: -1 }) 
+        .lean();
+
         return res.status(200).json({ success: true, All_Deposit_Receipts : all_Receipts });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message }); 
@@ -105,7 +130,29 @@ const getAllReceiptCurrentUser = async(req, res) =>{
             return res.status(404).json({ success: false, error: "Vendor is not loged in" });
         }
 
-        const all_receipts = await PaymentDepositReceipt.find({userId : currUser});
+        const {paymentMethod, paymentStatus, transactionId} = req.body;
+
+        const payload = {};
+
+        payload.userId = currUser;
+
+        if(paymentMethod && paymentMethod.trim() !== ""){
+            payload.paymentMethod = paymentMethod;
+        }
+
+        if(paymentStatus && paymentStatus.trim() !== ""){
+            payload.paymentStatus = paymentStatus;
+        }
+
+        if(transactionId && transactionId.trim() !== ""){
+            payload.transactionId = transactionId;
+        }
+
+        const all_receipts = await PaymentDepositReceipt.find(payload)
+        .populate("bankDetails", "accountName accountNumber bankName IFSCCode")
+        .populate("upiDetails", "upiId")
+        .sort({ updatedAt: -1 }) 
+        .lean();
         return res.status(200).json({ success: true, All_Deposit_Receipts : all_receipts });
 
     } catch (error) {

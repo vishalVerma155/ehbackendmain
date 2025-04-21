@@ -41,7 +41,7 @@ const querySchema = new mongoose.Schema(
         status: {
             type: String,
             enum: ["Open", "Resolved"],
-            default: "Resolved"
+            default: "Open"
         },
         userId: {
             type: mongoose.Schema.Types.ObjectId,

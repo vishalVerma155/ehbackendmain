@@ -1,4 +1,5 @@
 const Wallet = require('../../models/wallet/wallet.model.js');
+const User = require("../../models/user/web/user.model.js");
 
 const createOrGetWallet = async (req, res) => {
 

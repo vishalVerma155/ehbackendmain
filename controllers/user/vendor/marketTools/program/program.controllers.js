@@ -69,7 +69,7 @@ const getAllMarketingProgramForAdmin = async (req, res) => {
         if (req.user.role !== "admin") {
             return res.status(404).json({ success: false, error: "Only admin can do this" })
         }
-        const { userId, programName } = req.body;
+        const { userId, programName, status } = req.body;
 
         const payload = {};
 
@@ -80,6 +80,10 @@ const getAllMarketingProgramForAdmin = async (req, res) => {
 
         if (programName && programName.trim() !== "") {
             payload.programName = programName;
+        }
+
+        if(status && status.trim() !== ""){
+            payload.status = status;
         }
 
         const programs = await MarketingProgram.find(payload)
@@ -98,7 +102,22 @@ const getAllMarketingProgramForVendor = async (req, res) => {
 
     try {
         const userId = req.user._id;
-        const programs = await MarketingProgram.find({ userId })
+        const { programName, status } = req.body;
+
+        const payload = {};
+        payload.userId = userId;
+        
+        if (programName && programName.trim() !== "") {
+            payload.programName = programName;
+        }
+
+        if(status && status.trim() !== ""){
+            payload.status = status;
+        }
+
+
+        const programs = await MarketingProgram.find(payload).lean();
+      
 
         return res.status(200).json({ success: true, programs });
     } catch (error) {
