@@ -19,7 +19,6 @@ const createCampaign = async (req, res) => {
         const { toolType, name, campaignTargetLink, linkTitle } = req.body;
 
 
-        console.log(req.body)
         const isBlank = [toolType, name, campaignTargetLink, linkTitle].some((field) => field.trim() === "");
 
 
@@ -64,7 +63,33 @@ const createCampaign = async (req, res) => {
 
 const getAllCampaignsForAdmin = async (req, res) => {
     try {
-        const campaignsList = await Campaign.find();
+
+        if(req.user.role !== "admin"){
+            return res.status(500).json({ success: false, error: "Only admin can do this" });
+        }
+
+        const { name, status, category, userId } = req.body;
+
+        const filter = {};
+
+        if (name && name.trim() !== "") {
+            filter.name = { $regex: name, $options: "i" }; // case-insensitive search
+        }
+
+        if (status && status.trim() !== "") {
+            filter.status = status;
+        }
+
+        if (category && category.trim() !== "") {
+            const categoriesArray = category.split(",");
+            filter.categories = { $in: categoriesArray };
+        }
+
+        if(userId && userId.trim() !== ""){
+            filter.userId = userId;
+        }
+
+        const campaignsList = await Campaign.find(filter);
         return res.status(200).json({ success: true, campaignsList });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });

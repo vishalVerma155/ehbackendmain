@@ -9,7 +9,8 @@ const campaignSchema = new mongoose.Schema({
         trim: true
     },
     userId: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
         trim: true
     },
     toolIntegrationPlugin: {
