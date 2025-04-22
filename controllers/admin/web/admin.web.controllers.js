@@ -42,9 +42,9 @@ const registerAdmin = async (req, res) => {
         }
 
         // return response
-        res.status(200).json({ Message: "Admin has been  sucessfully register.", Admin: newUser });
+        res.status(200).json({success : true, Message: "Admin has been  sucessfully register." });
     } catch (error) {
-        return res.status(400).json({ Error: error.message });
+        return res.status(400).json({success: false, error: error.message });
     }
 };
 
@@ -85,9 +85,9 @@ const loginAdmin = async (req, res) => {
         res.cookie("AccessToken", accessToken); // set jwt token in cookies
 
         // return response
-        res.status(200).json({ Message: "Admin has been  sucessfully Loged in.", Admin: user, token: accessToken });
+        res.status(200).json({success : true, Message: "Admin has been  sucessfully Loged in.", token: accessToken });
     } catch (error) {
-        return res.status(400).json({ Error: error.message });
+        return res.status(400).json({success: false, error: error.message });
     }
 };
 
@@ -143,13 +143,13 @@ const getAllUsersList = async (req, res) => {
         const { userType } = req.body;
         if (!userType) {
             all_Users_List = await User.find();
-            return res.status(200).json({ Message: `All users has been successfully fetched.`, users: all_Users_List });
+            return res.status(200).json({success: true, Message: `All users has been successfully fetched.`, users: all_Users_List });
         }
         all_Users_List = await User.find({ role: userType });
-        return res.status(200).json({ Message: `${userType} has been successfully fetched.`, users: all_Users_List });
+        return res.status(200).json({success: true, Message: `${userType} has been successfully fetched.`, users: all_Users_List });
 
     } catch (error) {
-        return res.status(400).json({ Error: error.message });
+        return res.status(400).json({success: false, error: error.message });
     }
 }
 
@@ -157,9 +157,9 @@ const searchUser = async (req, res) => {
     try {
         const body = req.body;
         const user = await User.findOne(body);
-        return res.status(200).json({ Message: `User has been successfully fetched.`, user });
+        return res.status(200).json({success: true, Message: `User has been successfully fetched.`, user });
     } catch (error) {
-        return res.status(400).json({ Error: error.message });
+        return res.status(400).json({success: false, error: error.message });
     }
 }
 
