@@ -153,6 +153,7 @@ const getLedger = async(req, res) =>{
         let transactions = wallet.transactions;
 
         let balance = 0;
+        let openingBalance = 0;
     
         // Apply Filters (Optional)
         transactions = transactions
@@ -167,13 +168,21 @@ const getLedger = async(req, res) =>{
                 if (type) {
                     inType = txn.type === type;
                 }
-    
+
+                if(txnDate < new Date(startDate)){
+
+                    if(txn.drCr === "DR"){
+                        openingBalance -= txn.amount;
+                    }else{
+                        openingBalance += txn.amount;
+                    }
+                }
                 return inDateRange && inType;
             })
             .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)) // Sort by date
             .map(txn => {
                 let amount = txn.amount;
-                if (txn.drCr === "DR") balance -= amount;
+                if (txn.drCr === "DR")  balance -= amount;
                 else balance += amount;
     
                 return {
@@ -182,11 +191,11 @@ const getLedger = async(req, res) =>{
                     type: txn.type.replace("_", " "),
                     debit: txn.drCr === "DR" ? amount : "-",
                     credit: txn.drCr === "CR" ? amount : "-",
-                    balance: balance
+                    balance: balance + openingBalance
                 };
             });
     
-            return res.status(200).json({ success: true, message: "Ledger has been made", ledger : transactions });
+            return res.status(200).json({ success: true, message: "Ledger has been made", ledger : transactions, openingBalance });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
