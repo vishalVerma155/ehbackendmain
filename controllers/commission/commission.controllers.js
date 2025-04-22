@@ -175,14 +175,30 @@ const getCommissionGiverWise = async (req, res) => {
     try {
         const giverId = req.user._id;
         const role = req.user.role;
+        const { startDate, endDate, paymentStatus } = req.body;
+
 
         if (!giverId) {
             return res.status(404).json({ success: false, error: "User is not loged in." });
         }
 
+        const payload = {};
+
+        if (startDate && endDate) {
+            payload.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
+
+        if (paymentStatus && paymentStatus.trim() !== "") {
+            payload.paymentStatus = paymentStatus;
+        }
+
         if (role === "admin") {
 
-            const giverCommission = await Commission.find({ giverAdmin: giverId })
+            payload.giverAdmin = giverId ;
+            const giverCommission = await Commission.find(payload)
                 .populate("getterId", "firstName lastName email userId role")
                 .populate("giverAdmin", "fullName email userId role")
                 .lean();
@@ -191,7 +207,8 @@ const getCommissionGiverWise = async (req, res) => {
             return res.status(200).json({ success: true, given_Commission: giverCommission });
         }
 
-        const giverCommission = await Commission.find({ giverId })
+        payload.giverId = giverId;
+         const giverCommission = await Commission.find(payload)
             .populate("giverId", "firstName lastName email userId role")
             .populate("getterAdmin", "fullName email userId role")
             .lean();
@@ -207,20 +224,37 @@ const getCommissionGetterWise = async (req, res) => {
     try {
         const getterId = req.user._id;
         const role = req.user.role;
+        const { startDate, endDate, paymentStatus } = req.body;
 
         if (!getterId) {
             return res.status(404).json({ success: false, error: "User is not loged in" });
         }
 
+        const payload = {};
+
+        if (startDate && endDate) {
+            payload.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
+
+        if (paymentStatus && paymentStatus.trim() !== "") {
+            payload.paymentStatus = paymentStatus;
+        }
+
+
         if (role === "admin") {
-            const getterCommission = await Commission.find({ getterAdmin: getterId })
+            payload.getterAdmin = getterId;
+            const getterCommission = await Commission.find(payload)
                 .populate("giverId", "firstName lastName email userId role")
                 .populate("getterAdmin", "fullName email userId role")
                 .lean();
             return res.status(200).json({ success: true, getter_Commission: getterCommission });
         }
 
-        const getterCommission = await Commission.find({ getterId })
+        payload.getterId = getterId;
+        const getterCommission = await Commission.find(payload)
             .populate("getterId", "firstName lastName email userId role")
             .populate("giverAdmin", "fullName email userId role")
             .lean();
