@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const affiliateClubSchema = new mongoose.Schema({
   clubName : {
     type : String,
-    enum: ['spark', 'rise', 'impact', 'icon circle'],
+    // enum: ['spark', 'rise', 'impact', 'icon circle'],
     unique: true
   },
   commissionPercentage: {
