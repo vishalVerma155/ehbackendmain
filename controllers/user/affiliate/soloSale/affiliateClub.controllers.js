@@ -122,7 +122,7 @@ const getAllClubMember = async(req, res) =>{
       return res.status(400).json({ success: false, error: "Club name is required." });
       }
 
-      const clubMember = await User.find({clubName}).select("firstName userId role clubName");
+      const clubMember = await User.find({clubName}).select("firstName userId role clubName email userName country");
 
       return res.status(200).json({ success: true, message: `${clubName} has been fetched.`, clubMember });
 
