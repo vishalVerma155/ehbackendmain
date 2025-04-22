@@ -1,9 +1,8 @@
 
 const express = require('express');
-const {registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree} = require('../../controllers/admin/web/admin.web.controllers.js');
+const {registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree,editAnyUser, deleteAnyUser} = require('../../controllers/admin/web/admin.web.controllers.js');
 const verifyJWT = require('../../middleware/authMiddleware.js');
-const {deleteVendorProfile, getAllVendors} = require('../../controllers/user/vendor/web/vendor.web.controllers.js');
-const {deleteAffiliateProfile, getAllAffiliates} = require("../../controllers/user/affiliate/web/affiliate.web.controllers.js")
+
 
 
 
@@ -27,27 +26,11 @@ router.patch("/changeAdminPassword", verifyJWT, changeAdminPassword);
 // get affiliate tree
 router.get("/affiliateTree/:userId", getAffiliateTree);
 
+// delete any user
+router.delete("/deleteAnyUser/:userId", verifyJWT, deleteAnyUser );
 
-
-
-
-// get all vendors
-router.get("/getAllVendors", verifyJWT, getAllVendors);
-
-// delete vendor profile 
-router.delete("/deleteVendorProfile/:userId", verifyJWT, deleteVendorProfile);
-
-
-
-
-
-
-
-// get all affiliate
-router.get("/getAllAffiliates", verifyJWT, getAllAffiliates);
-
-// delete affiliate profile 
-router.delete("/deleteAffiliateProfile/:userId", verifyJWT, deleteAffiliateProfile);
+// edit any user
+router.patch("/editAnyUser/:userId", verifyJWT, editAnyUser);
 
 
 module.exports = router;

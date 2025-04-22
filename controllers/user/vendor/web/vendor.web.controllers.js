@@ -62,7 +62,7 @@ const registerVendor = async (req, res) => {
         const wallet = await axios.post(`https://ehbackendmain.onrender.com/wallet/createWallet/${newUser._id}`);
 
         // return response
-        res.status(200).json({ success: true, Message: "Vendor has been  sucessfully register.", vendor: newUser, walletCreated: wallet.data.success });
+        res.status(200).json({ success: true, Message: "Vendor has been  sucessfully register." });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
@@ -120,7 +120,7 @@ const registerVendorWithGoogle = async (req, res) => {
 
                 res.cookie("AccessToken", accessToken);
 
-                return res.status(200).json({ success: true, Message: "Vendor has been sucessfully register.", vendor: newUser, token: accessToken, walletCreated: wallet.data.success });
+                return res.status(200).json({ success: true, Message: "Vendor has been sucessfully register.",  token: accessToken,  });
             }
 
             if (isUserExisted.role !== "vendor") {
@@ -139,7 +139,7 @@ const registerVendorWithGoogle = async (req, res) => {
             res.cookie("AccessToken", accessToken);
 
 
-            return res.status(200).json({ success: true, Message: "vendor has been  sucessfully Loged in.", vendor: isUserExisted, token: accessToken });
+            return res.status(200).json({ success: true, Message: "vendor has been  sucessfully Loged in.", token: accessToken });
         }
 
         return res.status(404).json({ success: false, error: "Google id not found" });
@@ -188,7 +188,7 @@ const loginVendor = async (req, res) => {
         res.cookie("AccessToken", accessToken);
 
         // return response
-        return res.status(200).json({ success: true, Message: "Vendor has been sucessfully Loged in.", vendor: user, token: accessToken });
+        return res.status(200).json({ success: true, Message: "Vendor has been sucessfully Loged in.", token: accessToken });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
@@ -271,26 +271,6 @@ const editVendor = async (req, res) => {
 
 }
 
-const deleteVendorProfile = async (req, res) => {
-    try {
-
-        if (req.user.role !== "admin") {
-            return res.status(404).json({ success: false, error: "Only admin can delete profile" });
-        }
-        const userId = req.params.userId; // get user id
-
-        if (!userId) {
-            return res.status(404).json({ success: false, error: "User id not found" });
-        }
-
-        const deletedVendor = await User.findByIdAndDelete(userId); // find and delete user
-
-        return res.status(200).json({ success: true, Message: "Vendor has been sucessfully deleted", deletedVendor }); // return response
-    } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
-    }
-}
-
 // change Vendor password
 
 const changeVendorPassword = async (req, res) => {
@@ -330,20 +310,6 @@ const changeVendorPassword = async (req, res) => {
     }
 }
 
-// get all affiliates
-const getAllVendors = async (req, res) => {
-    try {
-        const role = req.user.role;
-        if (!role || role !== "admin") {
-            return res.status(401).json({ success: false, error: "Only admin can do this" });
-        }
 
-        const ven_list = await User.find({ role: "vendor" });
-        return res.status(200).json({ success: true, vendorsList: ven_list });
 
-    } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
-    }
-}
-
-module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, deleteVendorProfile, changeVendorPassword, getAllVendors, getVendorProfile };
+module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, changeVendorPassword,  getVendorProfile };

@@ -93,7 +93,7 @@ const registerAffiliate = async (req, res) => {
       const wallet = await axios.post(`https://ehbackendmain.onrender.com/wallet/createWallet/${newUser._id}`);
 
       // return response
-      res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register.", affiliate: newUser, walletCreated: wallet.data.success });
+      res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register.", });
    } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
    }
@@ -173,7 +173,7 @@ const registerAffiliateWithGoogle = async (req, res) => {
 
             res.cookie("AccessToken", accessToken);
 
-            return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register.", affiliate: newUser, token: accessToken, walletCreated : wallet.data.success });
+            return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register.", token: accessToken});
          }
 
          if(isUserExisted.role !== "affiliate"){
@@ -191,7 +191,7 @@ const registerAffiliateWithGoogle = async (req, res) => {
 
          res.cookie("AccessToken", accessToken);
 
-         return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in.", affiliate: isUserExisted, token: accessToken });
+         return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in.", token: accessToken });
       }
 
       return res.status(404).json({success: false, error: "Google id not found" });
@@ -240,7 +240,7 @@ const loginAffiliate = async (req, res) => {
       res.cookie("AccessToken", accessToken);
 
       // return response
-      return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in.", affiliate: user, token: accessToken });
+      return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in.",  token: accessToken });
    } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
    }
@@ -325,42 +325,7 @@ const editAffiliate = async (req, res) => {
 
 }
 
-// get all affiliates
-const getAllAffiliates = async(req, res) =>{
-   try {
-      const role = req.user.role;
-      if(!role || role !== "admin"){
-         return res.status(401).json({ success: false, error: "Only admin can do this" });
-      }
 
-      const aff_list = await User.find({role : "affiliate"});
-      return res.status(200).json({ success: true, affiliatesList : aff_list });
-
-   } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
-   }
-}
-
-// delete affiliate profile
-const deleteAffiliateProfile = async (req, res) => {
-   try {
-      const userId = req.params.userId; // get user id
-
-      if (!userId) {
-         return res.status(404).json({success: false, error: "User id not found" });
-      }
-
-      const deletedAffiliate = await User.findByIdAndDelete(userId); // find and delete user
-      
-      if (!deletedAffiliate) {
-         return res.status(404).json({success: false, error: "Affiliate not found" });
-      }
-
-      return res.status(200).json({success: true, Message: "Affiliate has been sucessfully deleted", deletedAffiliate }); // return response
-   } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
-   }
-}
 
 // get affiliate by affiliate id
 const getUserByUserId = async (req, res) => {
@@ -521,4 +486,4 @@ function buildAffiliateTree(user) {
 
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, deleteAffiliateProfile, changeAffiliatePaswword, getUserByUserId, getAllAffiliates, getAffiliateProfile, getCurrUserAffTree };
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId,  getAffiliateProfile, getCurrUserAffTree };

@@ -11,7 +11,7 @@ const registerAdmin = async (req, res) => {
         const { fullName, email, password } = req.body;
 
         const isAdminExisted = await Admin.find();
-        
+
         if (isAdminExisted.length >= 1) {
             return res.status(401).json({ Message: "Admin is already existed. There can be only one admin" })
         }
@@ -42,9 +42,9 @@ const registerAdmin = async (req, res) => {
         }
 
         // return response
-        res.status(200).json({success : true, Message: "Admin has been  sucessfully register." });
+        res.status(200).json({ success: true, Message: "Admin has been  sucessfully register." });
     } catch (error) {
-        return res.status(400).json({success: false, error: error.message });
+        return res.status(400).json({ success: false, error: error.message });
     }
 };
 
@@ -85,71 +85,173 @@ const loginAdmin = async (req, res) => {
         res.cookie("AccessToken", accessToken); // set jwt token in cookies
 
         // return response
-        res.status(200).json({success : true, Message: "Admin has been  sucessfully Loged in.", token: accessToken });
+        res.status(200).json({ success: true, Message: "Admin has been  sucessfully Loged in.", token: accessToken });
     } catch (error) {
-        return res.status(400).json({success: false, error: error.message });
+        return res.status(400).json({ success: false, error: error.message });
     }
 };
 
-// const editAdmin = async (req, res) => {
-//     const data = req.body;
-//     console.log(data);
-//     res.status(200).json({ Message: "Admin has been  sucessfully Loged in.", Admin: data });
-// }
+
+const deleteAnyUser = async (req, res) => {
+    try {
+
+        if (req.user.role !== "admin") {
+            return res.status(404).json({ success: false, error: "Only admin can delete profile" });
+        }
+        const userId = req.params.userId; // get user id
+
+        if (!userId) {
+            return res.status(404).json({ success: false, error: "User id not found" });
+        }
+
+        const deletedUser = await User.findByIdAndDelete(userId); // find and delete user
+
+        if (!deletedUser) {
+            return res.status(404).json({ success: false, error: "User not found" });
+        }
+
+        return res.status(200).json({ success: true, Message: "User has been sucessfully deleted", deletedUser }); // return response
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
 
 const changeAdminPassword = async (req, res) => {
     try {
 
-        if(req.user.role !== "admin"){
-          return res.status(401).json({success: false, error: "Only admin can do this" });
+        if (req.user.role !== "admin") {
+            return res.status(401).json({ success: false, error: "Only admin can do this" });
         }
 
-       const { currentPassword, newPassword } = req.body; // take details
- 
-       if (!currentPassword || currentPassword && currentPassword.trim() === "" || !newPassword || newPassword && newPassword.trim() === "") {
-          return res.status(401).json({success: false, error: "Please enter all fields" });
-       }
- 
-       const userId = req.user._id;
-       const admin = await Admin.findById(userId);
- 
-       // compare password
-       const isPasswordCorrect = await comparePassword(currentPassword, admin.password);
- 
-       if (!isPasswordCorrect) {
-          return res.status(401).json({success: false, error: "password is not matched" });
-       }
- 
-       const newHashedPassword = await hashPassword(newPassword); // hash new password
-       admin.password = newHashedPassword;
- 
-       await admin.save(); // save user password
- 
-       return res.status(200).json({success: true, Message: "Password has been chenged" });
+        const { currentPassword, newPassword } = req.body; // take details
+
+        if (!currentPassword || currentPassword && currentPassword.trim() === "" || !newPassword || newPassword && newPassword.trim() === "") {
+            return res.status(401).json({ success: false, error: "Please enter all fields" });
+        }
+
+        const userId = req.user._id;
+        const admin = await Admin.findById(userId);
+
+        // compare password
+        const isPasswordCorrect = await comparePassword(currentPassword, admin.password);
+
+        if (!isPasswordCorrect) {
+            return res.status(401).json({ success: false, error: "password is not matched" });
+        }
+
+        const newHashedPassword = await hashPassword(newPassword); // hash new password
+        admin.password = newHashedPassword;
+
+        await admin.save(); // save user password
+
+        return res.status(200).json({ success: true, Message: "Password has been chenged" });
     } catch (error) {
-       return res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ success: false, error: error.message });
     }
- }
+}
 
 const getAllUsersList = async (req, res) => {
 
     try {
 
-        if(req.user.role !== "admin"){
-            return res.status(400).json({success : false, error : "Only admin can do this"});
+        if (req.user.role !== "admin") {
+            return res.status(400).json({ success: false, error: "Only admin can do this" });
         }
 
         let all_Users_List;
         const { userType } = req.body;
         if (!userType) {
             all_Users_List = await User.find();
-            return res.status(200).json({success: true, Message: `All users has been successfully fetched.`, users: all_Users_List });
+            return res.status(200).json({ success: true, Message: `All users has been successfully fetched.`, users: all_Users_List });
         }
         all_Users_List = await User.find({ role: userType });
-        return res.status(200).json({success: true, Message: `${userType} has been successfully fetched.`, users: all_Users_List });
+        return res.status(200).json({ success: true, Message: `${userType} has been successfully fetched.`, users: all_Users_List });
 
     } catch (error) {
-        return res.status(400).json({success: false, error: error.message });
+        return res.status(400).json({ success: false, error: error.message });
+    }
+}
+
+const editAnyUser = async (req, res) => {
+    try {
+
+        if(req.user.role !== "admin"){
+            return res.status(404).json({ success: false, error: "Only admin can do this" })
+        }
+        const { firstName, lastName, email, phoneNumber, userName, groups, password, storeName, country, address, soloSale, clubName } = req.body;
+        const user = req.params.userId;
+        const img = req.file?.path || undefined; // get image
+
+
+        if (!user) {
+            return res.status(500).json({ success: false, error: "User id not found" });
+        }
+
+        let payload = {};
+
+        if (firstName && firstName.trim() !== "") {
+            payload.firstName = firstName;
+        }
+
+        if (lastName && lastName.trim() !== "") {
+            payload.lastName = lastName;
+        }
+
+        if (country && country.trim() !== "") {
+            payload.country = country;
+        }
+
+        if(email && email.trim() !== ""){
+            payload.email = email;
+        }
+
+        if(userName && userName.trim() !== ""){
+            payload.userName = userName;
+        }
+
+        if(phoneNumber && phoneNumber.trim() !== ""){
+            payload.phoneNumber = phoneNumber;
+        }
+
+        if(groups && groups.trim() !== ""){
+            payload.groups = groups;
+        }
+
+        if(storeName && storeName.trim() !== ""){
+            payload.storeName = storeName;
+        }
+
+
+        if (password && password.trim() !== "") {
+            const newHashedPassword = await hashPassword(password); // hash new password
+            payload.password = newHashedPassword;
+        }
+
+        if (address && address.trim() !== "") {
+            payload.address = address;
+        }
+
+        if (img && img.trim() !== "") {
+            payload.image = img;
+        }
+
+        if (soloSale && soloSale.trim() !== "") {
+            payload.soloSale = soloSale;
+        }
+
+        if (clubName && clubName.trim() !== "") {
+            payload.clubName = clubName;
+        }
+
+        const updatedAffiliate = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
+
+        if (!updatedAffiliate) {
+            return res.status(400).json({ success: false, error: "User not found" });
+        }
+
+        return res.status(200).json({ success: true, message: "User is updated", updatedAffiliate });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 }
 
@@ -157,9 +259,9 @@ const searchUser = async (req, res) => {
     try {
         const body = req.body;
         const user = await User.findOne(body);
-        return res.status(200).json({success: true, Message: `User has been successfully fetched.`, user });
+        return res.status(200).json({ success: true, Message: `User has been successfully fetched.`, user });
     } catch (error) {
-        return res.status(400).json({success: false, error: error.message });
+        return res.status(400).json({ success: false, error: error.message });
     }
 }
 
@@ -245,6 +347,6 @@ function buildAffiliateTree(user) {
 }
 
 // auto login in any user account
-const autoLogin = (req, res) => {};
+const autoLogin = (req, res) => { };
 
-module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree };
+module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree, deleteAnyUser, editAnyUser };
