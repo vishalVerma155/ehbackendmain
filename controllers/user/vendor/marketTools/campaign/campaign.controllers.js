@@ -139,7 +139,6 @@ const urlEncode = async(req, res) =>{
 
 const tracker = async(req, res) =>{
     
-    console.log("Enter 1");
     const { data } = req.query;
 
     if (!data) return res.status(400).send("Invalid tracking link");
@@ -168,7 +167,7 @@ const tracker = async(req, res) =>{
         return res.redirect(campaignTargetLink);
 
     } catch (err) {
-        console.error("Tracking error:", err);
+
         return res.status(500).send("Something went wrong.");
     }
 }

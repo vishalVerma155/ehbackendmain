@@ -103,9 +103,17 @@ const editCommission = async (req, res) => {
         const { paymentStatus, finalStatus } = req.body;
         const commId = req.params.commmissionId;
 
+
         if (!commId) {
             return res.status(404).json({ success: false, error: "Commission id not found" });
         }
+        
+        const commission = await Commission.findById(commId);
+
+        if(commission.paymentStatus === "paid"){
+            return res.status(404).json({ success: false, error: "Commission is already paid." });
+        }
+
 
         if (!paymentStatus && !finalStatus) {
             return res.status(404).json({ success: false, error: "One field is compulsary" });
