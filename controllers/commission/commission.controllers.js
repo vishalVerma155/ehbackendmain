@@ -99,27 +99,38 @@ const createCommission = async (req, res) => {
 }
 
 const editCommission = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { paymentStatus, finalStatus } = req.body;
         const commId = req.params.commmissionId;
 
-
         if (!commId) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({ success: false, error: "Commission id not found" });
         }
 
-        
         if (!paymentStatus && !finalStatus) {
-            return res.status(404).json({ success: false, error: "One field is compulsary" });
-        }
-        
-        const commission = await Commission.findById(commId);
-
-        if(commission.paymentStatus === "paid"){
-            return res.status(404).json({ success: false, error: "Commission is already paid." });
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, error: "At least one field (paymentStatus or finalStatus) is compulsory" });
         }
 
+        const commission = await Commission.findById(commId).session(session);
 
+        if (!commission) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ success: false, error: "Commission not found" });
+        }
+
+        if (commission.paymentStatus === "paid") {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, error: "Commission is already paid." });
+        }
 
         const payload = {};
 
@@ -127,58 +138,154 @@ const editCommission = async (req, res) => {
             payload.paymentStatus = paymentStatus;
         }
 
-
         if (finalStatus && finalStatus.trim() !== "") {
             payload.finalStatus = finalStatus;
         }
 
-        const comm = await Commission.findByIdAndUpdate(commId, payload, { new: true });
+        const updatedCommission = await Commission.findByIdAndUpdate(
+            commId,
+            payload,
+            { new: true, session }
+        );
 
-        if (!comm) {
-            return res.status(404).json({ success: false, error: "commission receipt not found" });
+        if (!updatedCommission) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ success: false, error: "Commission receipt not found" });
         }
 
         let walletRes = undefined;
 
-        if (comm.paymentStatus === "paid") {
+        if (updatedCommission.paymentStatus === "paid") {
+            let apiPayload = {};
 
-            if (comm.type === "commission pay to admin") {
-
-                const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", {
-                    transactionId: comm.transactionId,
-                    amount: comm.commission,
-                    status: comm.paymentStatus,
-                    commissionReceipt: comm._id,
-                    giverId: comm.giverId,
-                    getterId: comm.getterAdmin
-                })
-
-                walletRes = response.data;
-
+            if (updatedCommission.type === "commission pay to admin") {
+                apiPayload = {
+                    transactionId: updatedCommission.transactionId,
+                    amount: updatedCommission.commission,
+                    status: updatedCommission.paymentStatus,
+                    commissionReceipt: updatedCommission._id,
+                    giverId: updatedCommission.giverId,
+                    getterId: updatedCommission.getterAdmin
+                };
             }
 
-            if (comm.type === "affiliate commission" || comm.type === "affiliate solo commission") {
+            if (updatedCommission.type === "affiliate commission" || updatedCommission.type === "affiliate solo commission") {
+                apiPayload = {
+                    transactionId: updatedCommission.transactionId,
+                    amount: updatedCommission.commission,
+                    status: updatedCommission.paymentStatus,
+                    commissionReceipt: updatedCommission._id,
+                    giverId: updatedCommission.giverAdmin,
+                    getterId: updatedCommission.getterId
+                };
+            }
 
-                const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", {
-                    transactionId: comm.transactionId,
-                    amount: comm.commission,
-                    status: comm.paymentStatus,
-                    commissionReceipt: comm._id,
-                    giverId: comm.giverAdmin,
-                    getterId: comm.getterId
-                })
-
-
+            // Now calling axios AFTER internal operations
+            try {
+                const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", apiPayload);
                 walletRes = response.data;
-
+            } catch (axiosError) {
+                await session.abortTransaction();
+                session.endSession();
+                return res.status(500).json({ success: false, error: "Wallet API call failed: " + axiosError.message });
             }
         }
 
-        return res.status(200).json({ success: true, updated_commission: comm, walletRes });
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.status(200).json({ success: true, updated_commission: updatedCommission, walletRes });
+
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         return res.status(500).json({ success: false, error: error.message });
     }
-}
+};
+
+
+// const editCommission = async (req, res) => {
+//     try {
+//         const { paymentStatus, finalStatus } = req.body;
+//         const commId = req.params.commmissionId;
+
+
+//         if (!commId) {
+//             return res.status(404).json({ success: false, error: "Commission id not found" });
+//         }
+
+        
+//         if (!paymentStatus && !finalStatus) {
+//             return res.status(404).json({ success: false, error: "One field is compulsary" });
+//         }
+        
+//         const commission = await Commission.findById(commId);
+
+//         if(commission.paymentStatus === "paid"){
+//             return res.status(404).json({ success: false, error: "Commission is already paid." });
+//         }
+
+
+
+//         const payload = {};
+
+//         if (paymentStatus && paymentStatus.trim() !== "") {
+//             payload.paymentStatus = paymentStatus;
+//         }
+
+
+//         if (finalStatus && finalStatus.trim() !== "") {
+//             payload.finalStatus = finalStatus;
+//         }
+
+//         const comm = await Commission.findByIdAndUpdate(commId, payload, { new: true });
+
+//         if (!comm) {
+//             return res.status(404).json({ success: false, error: "commission receipt not found" });
+//         }
+
+//         let walletRes = undefined;
+
+//         if (comm.paymentStatus === "paid") {
+
+//             if (comm.type === "commission pay to admin") {
+
+//                 const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", {
+//                     transactionId: comm.transactionId,
+//                     amount: comm.commission,
+//                     status: comm.paymentStatus,
+//                     commissionReceipt: comm._id,
+//                     giverId: comm.giverId,
+//                     getterId: comm.getterAdmin
+//                 })
+
+//                 walletRes = response.data;
+
+//             }
+
+//             if (comm.type === "affiliate commission" || comm.type === "affiliate solo commission") {
+
+//                 const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", {
+//                     transactionId: comm.transactionId,
+//                     amount: comm.commission,
+//                     status: comm.paymentStatus,
+//                     commissionReceipt: comm._id,
+//                     giverId: comm.giverAdmin,
+//                     getterId: comm.getterId
+//                 })
+
+
+//                 walletRes = response.data;
+
+//             }
+//         }
+
+//         return res.status(200).json({ success: true, updated_commission: comm, walletRes });
+//     } catch (error) {
+//         return res.status(500).json({ success: false, error: error.message });
+//     }
+// }
 
 const getCommissionGiverWise = async (req, res) => {
     try {
