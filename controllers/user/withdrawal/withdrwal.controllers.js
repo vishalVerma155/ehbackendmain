@@ -2,7 +2,9 @@ const Withdrawal = require('../../../models/user/vendor/withdrawal/withdrawal.mo
 const User = require("../../../models/user/web/user.model.js");
 const BankDetail = require('../../../models/user/bankDetails/bankDetails.model.js');
 const UpiId = require("../../../models/user/bankDetails/bankDetails.model.js");
-const Wallet = require("../../../models/wallet/wallet.model.js")
+const Wallet = require("../../../models/wallet/wallet.model.js");
+const WalletTransaction = require("../../../models/wallet/walletTranstions.model.js");
+const mongoose = require('mongoose');
 
 const createWithdrawalRequest = async (req, res) => {
     try {
@@ -90,59 +92,137 @@ const getAllWithdrawalRequestUser = async (req, res) => {
 }
 
 const editWithdrawalRequest = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const role = req.user.role;
 
         if (role !== "admin") {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({ success: false, error: "Only admin can do this" });
         }
 
         const { withdrawalReqId, status, transactionId } = req.body;
 
-        const withdReq = await Withdrawal.findById(withdrawalReqId);
+        const withdReq = await Withdrawal.findById(withdrawalReqId).session(session);
 
         if (!withdReq) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({ success: false, error: "Withdrawal request not found" });
         }
 
+        if (withdReq.status === "paid") {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ success: false, error: "Withdrawal request is already accepted." });
+        }
+
         withdReq.status = status;
-        await withdReq.save();
+        await withdReq.save({ session });
 
         if (withdReq.status === "paid") {
 
-            const wallet = await Wallet.findOne({ userId : withdReq.userId });
+            const wallet = await Wallet.findOne({ userId: withdReq.userId }).session(session);
             const amountWithdrawal = withdReq.amount;
             const paymentStatus = withdReq.status;
 
             const payload = {
-                transactionId: transactionId,
+                userId: withdReq.userId,
+                transactionId,
                 type: "withdrawal",
                 amount: amountWithdrawal,
                 drCr: "DR",
                 status: paymentStatus,
                 details: { withdrawalRequest: withdReq._id },
-                createdAt: new Date()
-            }
+            };
 
             wallet.balance -= Number(amountWithdrawal);
-            wallet.transactions.push(payload);
-            await wallet.save();
+            await wallet.save({ session });
 
-            let populatedWithdrawalReceipt = await Withdrawal.findById(withdReq._id)
-                .populate("userId", "firstName userId email")
-                .populate("bankDetails", "accountName accountNumber IFSCCode bankName")
-                .populate("upi", "upiId");
+            const walletTransaction = new WalletTransaction(payload);
+            await walletTransaction.save({ session });
 
-            return res.status(200).json({ success: true, populatedWithdrawalReceipt, message: "Your withdrawal request has been completed. Amount has been added in your given payment method" });
+            await session.commitTransaction();
+            session.endSession();
+
+            return res.status(200).json({ success: true, walletTransaction, message: "Your withdrawal request has been completed. Amount has been deducted." });
         }
 
+        await session.commitTransaction();
+        session.endSession();
 
-        return res.status(200).json({ success: true, withdReq, message: "Withdrawal status is not changed" })
+        return res.status(200).json({ success: true, withdReq, message: "Withdrawal status is updated" });
 
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         return res.status(500).json({ success: false, error: error.message });
     }
-}
+};
+
+
+// const editWithdrawalRequest = async (req, res) => {
+//     try {
+//         const role = req.user.role;
+
+//         if (role !== "admin") {
+//             return res.status(404).json({ success: false, error: "Only admin can do this" });
+//         }
+
+//         const { withdrawalReqId, status, transactionId } = req.body;
+
+//         const withdReq = await Withdrawal.findById(withdrawalReqId);
+
+//         if (!withdReq) {
+//             return res.status(404).json({ success: false, error: "Withdrawal request not found" });
+//         }
+
+//         if(withdReq.status === "paid"){
+//             return res.status(404).json({ success: false, error: "Withdrawal request is already accepted." });
+//         }
+
+//         withdReq.status = status;
+//         await withdReq.save();
+
+//         if (withdReq.status === "paid") {
+
+//             const wallet = await Wallet.findOne({ userId : withdReq.userId });
+//             const amountWithdrawal = withdReq.amount;
+//             const paymentStatus = withdReq.status;
+
+//             const payload = {
+//                 transactionId: transactionId,
+//                 type: "withdrawal",
+//                 amount: amountWithdrawal,
+//                 drCr: "DR",
+//                 status: paymentStatus,
+//                 details: { withdrawalRequest: withdReq._id },
+//             }
+
+//             wallet.balance -= Number(amountWithdrawal);
+//             await wallet.save();
+
+//             const walletTracnstion = new WalletTransaction(payload);
+//             await walletTracnstion.save()
+
+//             let populatedWithdrawalReceipt = await Withdrawal.findById(withdReq._id)
+//                 .populate("userId", "firstName userId email")
+//                 .populate("bankDetails", "accountName accountNumber IFSCCode bankName")
+//                 .populate("upi", "upiId");
+
+//             return res.status(200).json({ success: true, populatedWithdrawalReceipt, message: "Your withdrawal request has been completed. Amount has been added in your given payment method" });
+//         }
+
+
+//         return res.status(200).json({ success: true, withdReq, message: "Withdrawal status is not changed" })
+
+//     } catch (error) {
+//         return res.status(500).json({ success: false, error: error.message });
+//     }
+// }
 
 
 module.exports = { createWithdrawalRequest, getAllWithdrawalRequest, getAllWithdrawalRequestUser, editWithdrawalRequest };

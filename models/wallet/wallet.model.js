@@ -11,6 +11,10 @@ const walletSchema = new mongoose.Schema({
         required: true,
         default: 0
     },
+    currency: {
+        type: String,
+        required: true
+    },
     transactions: [
         {
             transactionId: {

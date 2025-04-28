@@ -2,14 +2,21 @@ const PaymentDepositReceipt = require('../../../../models/user/vendor/deposit/de
 const Wallet = require('../../../../models/wallet/wallet.model.js');
 const BankDetail = require('../../../../models/user/bankDetails/bankDetails.model.js');
 const UpiId = require('../../../../models/user/bankDetails/upi.model.js');
+const WalletTransaction = require("../../../../models/wallet/walletTranstions.model.js");
+const mongoose = require('mongoose');
+
 
 const createDepositReceipt = async (req, res) => {
-    try {
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
+    try {
         const userId = req.user._id;
 
-        if (!userId || userId && userId.trim() === "") {
-            return res.status(404).json({ success: false, error: "Vendor is not loged in" });
+        if (!userId || (typeof userId === "string" && userId.trim() === "")) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ success: false, error: "Vendor is not logged in" });
         }
 
         const { amountDeposited, paymentMethod, paymentStatus, bankDetails, upiId, transactionId } = req.body;
@@ -17,15 +24,22 @@ const createDepositReceipt = async (req, res) => {
         const isBlank = [paymentMethod, paymentStatus, transactionId].some((field) => field.trim() === "");
 
         if (isBlank) {
-            return res.status(404).json({ success: false, error: "Payment Method, Payment Status, Transaction Id" });
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, error: "Payment Method, Payment Status, and Transaction Id are required" });
         }
 
-        if (amountDeposited && Number(amountDeposited) <= 0) {
-            return res.status(400).json({ success: false, error: "Amount should be greater then 0" });
+        if (!amountDeposited || Number(amountDeposited) <= 0) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, error: "Amount should be greater than 0" });
         }
 
-        if ((!bankDetails || bankDetails && bankDetails.trim() === "") && (!upiId || upiId && upiId.trim() === "")) {
-            return res.status(400).json({ success: false, error: "Atleast one payment method is compulsary" });
+        if ((!bankDetails || (typeof bankDetails === "string" && bankDetails.trim() === "")) &&
+            (!upiId || (typeof upiId === "string" && upiId.trim() === ""))) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, error: "At least one payment method is compulsory" });
         }
 
         const depositReceipt = new PaymentDepositReceipt({
@@ -38,59 +52,147 @@ const createDepositReceipt = async (req, res) => {
             transactionId
         });
 
-        await depositReceipt.save();
-
+        await depositReceipt.save({ session });
 
         if (!depositReceipt) {
-            return res.status(500).json({ success: false, error: "error in creating commission receipt" });
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(500).json({ success: false, error: "Error in creating deposit receipt" });
         }
 
         if (depositReceipt.paymentStatus === "failed") {
-            return res.status(500).json({ success: false, depositReceipt });
+            await session.commitTransaction();
+            session.endSession();
+            return res.status(200).json({ success: true, depositReceipt, message: "Deposit failed." });
         }
 
-        const wallet = await Wallet.findOne({ userId });
+        const wallet = await Wallet.findOne({ userId }).session(session);
 
         if (!wallet) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({ success: false, error: "Wallet not found." });
         }
 
-        const payload = {
+        wallet.balance += Number(amountDeposited);
+        await wallet.save({ session });
+
+        const walletTrans = new WalletTransaction({
+            userId,
             transactionId: transactionId,
             type: "deposit",
             amount: amountDeposited,
             drCr: "CR",
             status: paymentStatus,
-            details: { depositReceipt: depositReceipt._id },
-            createdAt: new Date()
-        }
+            details: { depositReceipt: depositReceipt._id }
+        });
+        await walletTrans.save({ session });
 
-        wallet.balance += Number(amountDeposited);
-        wallet.transactions.push(payload);
-        await wallet.save();
+        await session.commitTransaction();
+        session.endSession();
 
-        let populatedDepositReceipt = undefined;
+        let populatedDepositReceipt = await PaymentDepositReceipt.findById(depositReceipt._id)
+            .populate("userId", "firstName lastName email userId role")
+            .populate("upiDetails", "upiId")
+            .populate("bankDetails", "accountName accountNumber bankName IFSCCode")
+            .lean();
 
-        if (paymentMethod === "upi") {
-            populatedDepositReceipt = await PaymentDepositReceipt.findById(depositReceipt._id)
-                .populate("userId", "firstName lastName email userId role")
-                .populate("upiDetails", "upiId")
-                .lean(); // Convert Mongoose document to plain object for better performance
-        }
-
-        if (paymentMethod === "bank_transfer") {
-            populatedDepositReceipt = await PaymentDepositReceipt.findById(depositReceipt._id)
-                .populate("userId", "firstName lastName email userId role")
-                .populate("bankDetails", "accountName accountNumber bankName IFSCCode")
-                .lean(); // Convert Mongoose document to plain object for better performance
-        }
-
-        return res.status(200).json({ success: true, populatedDepositReceipt });
+        return res.status(200).json({
+            success: true,
+            populatedDepositReceipt,
+            message: `${amountDeposited} has been deposited into your wallet.`
+        });
 
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         return res.status(500).json({ success: false, error: error.message });
     }
-}
+};
+
+
+// const createDepositReceipt = async (req, res) => {
+//     try {
+
+//         const userId = req.user._id;
+
+//         if (!userId || userId && userId.trim() === "") {
+//             return res.status(404).json({ success: false, error: "Vendor is not loged in" });
+//         }
+
+//         const { amountDeposited, paymentMethod, paymentStatus, bankDetails, upiId, transactionId } = req.body;
+
+//         const isBlank = [paymentMethod, paymentStatus, transactionId].some((field) => field.trim() === "");
+
+//         if (isBlank) {
+//             return res.status(404).json({ success: false, error: "Payment Method, Payment Status, Transaction Id" });
+//         }
+
+//         if (amountDeposited && Number(amountDeposited) <= 0) {
+//             return res.status(400).json({ success: false, error: "Amount should be greater then 0" });
+//         }
+
+//         if ((!bankDetails || bankDetails && bankDetails.trim() === "") && (!upiId || upiId && upiId.trim() === "")) {
+//             return res.status(400).json({ success: false, error: "Atleast one payment method is compulsary" });
+//         }
+
+//         const depositReceipt = new PaymentDepositReceipt({
+//             userId,
+//             amountDeposited,
+//             paymentMethod,
+//             paymentStatus,
+//             bankDetails: bankDetails ? bankDetails : undefined,
+//             upiDetails: upiId ? upiId : undefined,
+//             transactionId
+//         });
+
+//         await depositReceipt.save();
+
+
+//         if (!depositReceipt) {
+//             return res.status(500).json({ success: false, error: "error in creating commission receipt" });
+//         }
+
+//         if (depositReceipt.paymentStatus === "failed") {
+//             return res.status(500).json({ success: false, depositReceipt });
+//         }
+
+//         const wallet = await Wallet.findOne({ userId });
+
+//         if (!wallet) {
+//             return res.status(404).json({ success: false, error: "Wallet not found." });
+//         }
+
+//         wallet.balance += Number(amountDeposited);
+//         await wallet.save();
+
+
+//         const payload = {
+//             userId,
+//             transactionId: transactionId,
+//             type: "deposit",
+//             amount: amountDeposited,
+//             drCr: "CR",
+//             status: paymentStatus,
+//             details: { depositReceipt: depositReceipt._id }
+//         }
+
+//         const walletTrans = new WalletTransaction(payload);
+//         await walletTrans.save();
+
+
+//         let populatedDepositReceipt = await PaymentDepositReceipt.findById(depositReceipt._id)
+//             .populate("userId", "firstName lastName email userId role")
+//             .populate("upiDetails", "upiId")
+//             .populate("bankDetails", "accountName accountNumber bankName IFSCCode")
+//             .lean();
+        
+//         return res.status(200).json({ success: true, populatedDepositReceipt, message : `${amountDeposited} has been deposited in your walllet.` });
+
+//     } catch (error) {
+//         return res.status(500).json({ success: false, error: error.message });
+//     }
+// }
 
 const getAllReceiptForAdmin = async (req, res) => {
     try {
