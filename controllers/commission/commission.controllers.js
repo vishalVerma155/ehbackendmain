@@ -107,6 +107,11 @@ const editCommission = async (req, res) => {
         if (!commId) {
             return res.status(404).json({ success: false, error: "Commission id not found" });
         }
+
+        
+        if (!paymentStatus && !finalStatus) {
+            return res.status(404).json({ success: false, error: "One field is compulsary" });
+        }
         
         const commission = await Commission.findById(commId);
 
@@ -115,9 +120,6 @@ const editCommission = async (req, res) => {
         }
 
 
-        if (!paymentStatus && !finalStatus) {
-            return res.status(404).json({ success: false, error: "One field is compulsary" });
-        }
 
         const payload = {};
 
@@ -143,7 +145,7 @@ const editCommission = async (req, res) => {
             if (comm.type === "commission pay to admin") {
 
                 const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", {
-                    transactionId: "xyz",
+                    transactionId: comm.transactionId,
                     amount: comm.commission,
                     status: comm.paymentStatus,
                     commissionReceipt: comm._id,
@@ -158,7 +160,7 @@ const editCommission = async (req, res) => {
             if (comm.type === "affiliate commission" || comm.type === "affiliate solo commission") {
 
                 const response = await axios.post("https://ehbackendmain.onrender.com/wallet/addDataToWallet", {
-                    transactionId: "xyz",
+                    transactionId: comm.transactionId,
                     amount: comm.commission,
                     status: comm.paymentStatus,
                     commissionReceipt: comm._id,
@@ -166,7 +168,6 @@ const editCommission = async (req, res) => {
                     getterId: comm.getterId
                 })
 
-                console.log("Entered in section")
 
                 walletRes = response.data;
 
