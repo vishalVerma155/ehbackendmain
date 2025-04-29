@@ -118,7 +118,11 @@ const registerVendorWithGoogle = async (req, res) => {
                 // generate jwt token
                 const accessToken = generateJWT(payload);
 
-                res.cookie("AccessToken", accessToken);
+                res.cookie("AccessToken", accessToken, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'None'
+                  });
 
                 return res.status(200).json({ success: true, Message: "Vendor has been sucessfully register.",  token: accessToken,  });
             }
@@ -136,7 +140,11 @@ const registerVendorWithGoogle = async (req, res) => {
             // generate jwt token
             const accessToken = generateJWT(payload);
 
-            res.cookie("AccessToken", accessToken);
+            res.cookie("AccessToken", accessToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'None'
+              });
 
 
             return res.status(200).json({ success: true, Message: "vendor has been  sucessfully Loged in.", token: accessToken });
@@ -185,7 +193,11 @@ const loginVendor = async (req, res) => {
         // generate jwt token
         const accessToken = generateJWT(payload);
 
-        res.cookie("AccessToken", accessToken);
+        res.cookie("AccessToken", accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'None'
+          });
 
         // return response
         return res.status(200).json({ success: true, Message: "Vendor has been sucessfully Loged in.", token: accessToken });

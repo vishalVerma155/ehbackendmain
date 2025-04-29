@@ -171,7 +171,11 @@ const registerAffiliateWithGoogle = async (req, res) => {
             // generate jwt token
             const accessToken = generateJWT(payload);
 
-            res.cookie("AccessToken", accessToken);
+            res.cookie("AccessToken", accessToken, {
+               httpOnly: true,
+               secure: true,
+               sameSite: 'None'
+             });
 
             return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register.", token: accessToken});
          }
@@ -189,7 +193,11 @@ const registerAffiliateWithGoogle = async (req, res) => {
          // generate jwt token
          const accessToken = generateJWT(payload);
 
-         res.cookie("AccessToken", accessToken);
+         res.cookie("AccessToken", accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'None'
+          });
 
          return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in.", token: accessToken });
       }

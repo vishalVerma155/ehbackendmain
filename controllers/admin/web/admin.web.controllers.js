@@ -82,7 +82,11 @@ const loginAdmin = async (req, res) => {
             role: user.role
         });
 
-        res.cookie("AccessToken", accessToken); // set jwt token in cookies
+        res.cookie("AccessToken", accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'None'
+          }); // set jwt token in cookies
 
         // return response
         res.status(200).json({ success: true, Message: "Admin has been  sucessfully Loged in.", token: accessToken });
