@@ -496,6 +496,19 @@ function buildAffiliateTree(user) {
    return userMap.get(user._id.toString());
 }
 
+const logouUser = async(req, res) =>{
+   try {
+      res.clearCookie('AccessToken', {
+         httpOnly: true,
+         secure: true,
+         sameSite: 'None'
+       });
+       return res.status(200).json({success : true, message : "User has been successfully loged out"})
+   } catch (error) {
+      return res.status(500).json({success : false, error: error.message });
+   }
+}
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId,  getAffiliateProfile, getCurrUserAffTree };
+
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId,  getAffiliateProfile, getCurrUserAffTree, logouUser };
