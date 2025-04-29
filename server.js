@@ -27,10 +27,22 @@ const membershipModelRouter = require("./routes/vendor/membershipModel/vendorMem
 require("dotenv").config();
 const PORT = process.env.PORT || 4000;
 
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+
 // Middleware to parse JSON requests
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({origin : "*"}));
+
+app.use(cors({
+    origin: (origin, callback) => {
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true
+  }));
 
 // DB connection
 const dbconnect = require('./config/database.js');

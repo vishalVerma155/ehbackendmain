@@ -66,15 +66,12 @@ const addTranstionData = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
-
     try {
         const { transactionId, amount, status, commissionReceipt, giverId, getterId } = req.body;
         
-
         // Validation
         const isBlank = [transactionId, String(amount), status, commissionReceipt].some((field) => field.trim() === "");
     
-
         if (isBlank) {
             await session.abortTransaction();
             session.endSession();
@@ -83,8 +80,6 @@ const addTranstionData = async (req, res) => {
                 error: "transactionId, amount, status, commissionReceipt are required.",
             });
         }
-
-    
 
         // Fetch wallets
         const getterWallet = await Wallet.findOne({ userId: getterId }).session(session);
@@ -95,31 +90,24 @@ const addTranstionData = async (req, res) => {
             return res.status(404).json({ success: false, error: "Getter wallet not found" });
         }
         
-
         const giverWallet = await Wallet.findOne({ userId: giverId }).session(session);
         
-
         if (!giverWallet) {
             await session.abortTransaction();
             session.endSession();
             return res.status(404).json({ success: false, error: "Giver wallet not found" });
         }
         
-
         if (giverWallet.balance < Number(amount)) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({ success: false, error: "Insufficient balance in giver wallet" });
         }
 
-        
-
-
         // Update giver's wallet balance
         giverWallet.balance -= Number(amount);
         await giverWallet.save({ session });
         
-
         // Create giver's wallet transaction
         const giverTransaction = new WalletTransaction({
             userId: giverId,
@@ -135,12 +123,10 @@ const addTranstionData = async (req, res) => {
 
         await giverTransaction.save({ session });
    
-
         // Update getter's wallet balance
         getterWallet.balance += Number(amount);
         await getterWallet.save({ session });
         
-
         // Create getter's wallet transaction
         const getterTransaction = new WalletTransaction({
             userId: getterId,
@@ -155,11 +141,9 @@ const addTranstionData = async (req, res) => {
         });
         await getterTransaction.save({ session });
         
-
         await session.commitTransaction();
         session.endSession();
         
-
         return res.status(200).json({
             success: true,
             message: "Transaction completed successfully",
