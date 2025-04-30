@@ -196,7 +196,7 @@ const loginVendor = async (req, res) => {
         res.cookie("AccessToken", accessToken, {
             httpOnly: true,
             secure: true,
-            sameSite: 'LAX'
+            sameSite: 'None'
           });
 
         // return response

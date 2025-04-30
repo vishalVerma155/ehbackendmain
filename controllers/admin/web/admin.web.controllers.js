@@ -85,7 +85,7 @@ const loginAdmin = async (req, res) => {
         res.cookie("AccessToken", accessToken, {
             httpOnly: true,
             secure: true,
-            sameSite: 'LAX',
+            sameSite: 'None',
           }); // set jwt token in cookies
 
         // return response
