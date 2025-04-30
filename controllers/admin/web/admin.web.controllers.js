@@ -354,12 +354,17 @@ function buildAffiliateTree(user) {
 const autoLogin = (req, res) => { };
 
 // refresh api
-const authenticationApi = (req, res) =>{
+const authenticationApiAdmin = (req, res) =>{
     try {
-        res.status(200).json({success : true, message: "Authentication successfully." });
+ 
+       if(req.user.role !== "admin"){
+        return res.status(401).json({success : false, message: "Wrong user role" });
+       }
+ 
+       return res.status(200).json({success : true, message: "Authentication successfully." });
     } catch (error) {
         res.status(404).json({success : false, error: error.message });
     }
-}
+ }
 
-module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree, deleteAnyUser, editAnyUser, authenticationApi };
+module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree, deleteAnyUser, editAnyUser, authenticationApiAdmin };

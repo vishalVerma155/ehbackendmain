@@ -323,5 +323,18 @@ const changeVendorPassword = async (req, res) => {
 }
 
 
+const authenticationApiVendor = (req, res) =>{
+    try {
+ 
+       if(req.user.role !== "vendor"){
+        return res.status(401).json({success : false, message: "Wrong user role" });
+       }
+ 
+       return res.status(200).json({success : true, message: "Authentication successfully." });
+    } catch (error) {
+        res.status(404).json({success : false, error: error.message });
+    }
+ }
 
-module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, changeVendorPassword,  getVendorProfile };
+
+module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, changeVendorPassword,  getVendorProfile, authenticationApiVendor };

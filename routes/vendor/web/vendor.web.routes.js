@@ -1,7 +1,7 @@
 
 const express = require('express');
 const verifyJWT = require('../../../middleware/authMiddleware.js');
-const {registerVendor, registerVendorWithGoogle,  editVendor, loginVendor, changeVendorPassword, getVendorProfile} = require('../../../controllers/user/vendor/web/vendor.web.controllers.js');
+const {registerVendor, registerVendorWithGoogle,  editVendor, loginVendor, changeVendorPassword,authenticationApiVendor, getVendorProfile} = require('../../../controllers/user/vendor/web/vendor.web.controllers.js');
 const {upload} = require('../../../utils/multer.js')
 
 
@@ -26,6 +26,9 @@ router.get("/getVendor",verifyJWT, getVendorProfile);
 
 // change password
 router.patch("/changePassword", verifyJWT, changeVendorPassword);
+
+// vendor authentication
+router.get("/vendorAuthentication", verifyJWT, authenticationApiVendor)
 
 
 
