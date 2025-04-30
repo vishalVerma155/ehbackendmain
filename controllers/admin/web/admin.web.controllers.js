@@ -356,7 +356,7 @@ const autoLogin = (req, res) => { };
 // refresh api
 const authenticationApi = (req, res) =>{
     try {
-        res.status(404).json({success : true, message: "Authentication successfully." });
+        res.status(200).json({success : true, message: "Authentication successfully." });
     } catch (error) {
         res.status(404).json({success : false, error: error.message });
     }
