@@ -141,8 +141,6 @@ const getAllWithdrawalRequestUser = async (req, res) => {
             filter.upi = { $ne: null };
         }
 
-        console.log(filter)
-
         const withdrawalRequests = await Withdrawal.find(filter).sort({ paymentStatus: -1, createdAt: -1 })
             .populate("userId", "firstName userId email")
             .populate("bankDetails", "accountName accountNumber IFSCCode bankName")

@@ -509,6 +509,19 @@ const logouUser = async(req, res) =>{
    }
 }
 
+const authenticationApiAffiliate = (req, res) =>{
+   try {
+
+      if(req.user.role !== "affiliate"){
+       return res.status(401).json({success : false, message: "Wrong user role" });
+      }
+
+      return res.status(200).json({success : true, message: "Authentication successfully." });
+   } catch (error) {
+       res.status(404).json({success : false, error: error.message });
+   }
+}
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId,  getAffiliateProfile, getCurrUserAffTree, logouUser };
+
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId,  getAffiliateProfile, getCurrUserAffTree, logouUser, authenticationApiAffiliate };

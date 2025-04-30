@@ -1,7 +1,7 @@
 
 const express = require('express');
 const verifyJWT = require('../../../middleware/authMiddleware.js');
-const {registerAffiliateWithGoogle, generateAffiliateLink, registerAffiliate,loginAffiliate, editAffiliate, getUserByUserId, getAffiliateProfile, changeAffiliatePaswword, getCurrUserAffTree, logouUser } = require('../../../controllers/user/affiliate/web/affiliate.web.controllers.js');
+const {registerAffiliateWithGoogle, generateAffiliateLink, registerAffiliate,loginAffiliate, editAffiliate, getUserByUserId, getAffiliateProfile, changeAffiliatePaswword, getCurrUserAffTree, logouUser, authenticationApiAffiliate } = require('../../../controllers/user/affiliate/web/affiliate.web.controllers.js');
 const {upload} = require('../../../utils/multer.js')
 
 
@@ -38,6 +38,8 @@ router.get("/getCurrUserAffTree", verifyJWT, getCurrUserAffTree);
 // logout user
 router.get("/logoutUser", verifyJWT, logouUser);
 
+// authenticate affiliate
+router.get("/affiliateAuthentication", verifyJWT, authenticationApiAffiliate)
 
 
 
