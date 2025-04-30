@@ -11,10 +11,10 @@ const router = express.Router();
 router.post("/createWithdrawalRequest",verifyJWT, createWithdrawalRequest);
 
 // get all withdrawal request
-router.get("/getAllWithdrawalRequest",verifyJWT, getAllWithdrawalRequest);
+router.post("/getAllWithdrawalRequest",verifyJWT, getAllWithdrawalRequest);
 
 // get all withdrawal request of loged in user
-router.get("/getAllWithdrawalRequestUser",verifyJWT, getAllWithdrawalRequestUser);
+router.post("/getAllWithdrawalRequestUser",verifyJWT, getAllWithdrawalRequestUser);
 
 // edit withdrawal request
 router.patch("/editWithdrawalRequest",verifyJWT, editWithdrawalRequest);

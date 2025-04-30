@@ -85,11 +85,11 @@ const loginAdmin = async (req, res) => {
         res.cookie("AccessToken", accessToken, {
             httpOnly: true,
             secure: true,
-            sameSite: 'None'
+            sameSite: 'LAX',
           }); // set jwt token in cookies
 
         // return response
-        res.status(200).json({ success: true, Message: "Admin has been  sucessfully Loged in.", token: accessToken });
+        res.status(200).json({ success: true, Message: "Admin has been  sucessfully Loged in." });
     } catch (error) {
         return res.status(400).json({ success: false, error: error.message });
     }
@@ -353,4 +353,13 @@ function buildAffiliateTree(user) {
 // auto login in any user account
 const autoLogin = (req, res) => { };
 
-module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree, deleteAnyUser, editAnyUser };
+// refresh api
+const authenticationApi = (req, res) =>{
+    try {
+        res.status(404).json({success : true, message: "Authentication successfully." });
+    } catch (error) {
+        res.status(404).json({success : false, error: error.message });
+    }
+}
+
+module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree, deleteAnyUser, editAnyUser, authenticationApi };

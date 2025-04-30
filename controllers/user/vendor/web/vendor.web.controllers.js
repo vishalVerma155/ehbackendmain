@@ -121,10 +121,10 @@ const registerVendorWithGoogle = async (req, res) => {
                 res.cookie("AccessToken", accessToken, {
                     httpOnly: true,
                     secure: true,
-                    sameSite: 'None'
+                    sameSite: 'LAX'
                   });
 
-                return res.status(200).json({ success: true, Message: "Vendor has been sucessfully register.",  token: accessToken,  });
+                return res.status(200).json({ success: true, Message: "Vendor has been sucessfully register." });
             }
 
             if (isUserExisted.role !== "vendor") {
@@ -143,11 +143,11 @@ const registerVendorWithGoogle = async (req, res) => {
             res.cookie("AccessToken", accessToken, {
                 httpOnly: true,
                 secure: true,
-                sameSite: 'None'
+                sameSite: 'LAX'
               });
 
 
-            return res.status(200).json({ success: true, Message: "vendor has been  sucessfully Loged in.", token: accessToken });
+            return res.status(200).json({ success: true, Message: "vendor has been  sucessfully Loged in." });
         }
 
         return res.status(404).json({ success: false, error: "Google id not found" });
@@ -196,11 +196,11 @@ const loginVendor = async (req, res) => {
         res.cookie("AccessToken", accessToken, {
             httpOnly: true,
             secure: true,
-            sameSite: 'None'
+            sameSite: 'LAX'
           });
 
         // return response
-        return res.status(200).json({ success: true, Message: "Vendor has been sucessfully Loged in.", token: accessToken });
+        return res.status(200).json({ success: true, Message: "Vendor has been sucessfully Loged in." });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });

@@ -15,14 +15,14 @@ const createWithdrawalRequest = async (req, res) => {
             return res.status(404).json({ success: false, error: "Vendor is not loged in" });
         }
 
-        const currUserwallet = await Wallet.findOne({userId : currUser});
+        const currUserwallet = await Wallet.findOne({ userId: currUser });
 
-        if(!currUserwallet){
+        if (!currUserwallet) {
             return res.status(404).json({ success: false, error: "User wallet not found" });
         }
 
-        if(amount > currUserwallet.balance){
-            return res.status(404).json({ success: false, error: `You can not withdrawal this amount because your wallet balance is :${currUserwallet.balance} `});
+        if (amount > currUserwallet.balance) {
+            return res.status(404).json({ success: false, error: `You can not withdrawal this amount because your wallet balance is :${currUserwallet.balance} ` });
         }
 
         if (amount < 0) {
@@ -58,7 +58,40 @@ const getAllWithdrawalRequest = async (req, res) => {
             return res.status(404).json({ success: false, error: "Only admin can do this" });
         }
 
-        const withdrawalRequests = await Withdrawal.find().sort({ paymentStatus: -1, createdAt: -1 })
+        const { startDate, endDate, status, paymentMethod } = req.body;
+
+        const filter = {};
+
+        // Filter by status
+        if (status && status.trim() !== "") {
+            filter.status = status;
+        }
+
+        // Filter by date range
+        if (startDate || endDate) {
+            filter.createdAt = {};
+          
+            if (startDate) {
+              filter.createdAt.$gte = new Date(`${startDate}T00:00:00.000Z`);
+            }
+            // console.log("hurr", filter)
+
+          
+            if (endDate) {
+              filter.createdAt.$lte = new Date(`${endDate}T23:59:59.999Z`);
+            }
+          }
+          
+          
+
+        // Filter by payment method
+        if (paymentMethod === 'bank') {
+            filter.bankDetails = { $ne: null };
+        } else if (paymentMethod === 'upi') {
+            filter.upi = { $ne: null };
+        }
+
+        const withdrawalRequests = await Withdrawal.find(filter).sort({ paymentStatus: -1, createdAt: -1 })
             .populate("userId", "firstName userId email")
             .populate("bankDetails", "accountName accountNumber IFSCCode bankName")
             .populate("upi", "upiId");
@@ -79,7 +112,38 @@ const getAllWithdrawalRequestUser = async (req, res) => {
             return res.status(404).json({ success: false, error: "User is not loged in" });
         }
 
-        const withdrawalRequests = await Withdrawal.find({ userId }).sort({ paymentStatus: -1, createdAt: -1 })
+        const { startDate, endDate, status, paymentMethod } = req.body;
+
+        const filter = { userId };
+
+        // Filter by status
+        if (status && status.trim() !== "") {
+            filter.status = status;
+        }
+
+        // Filter by date range
+        if (startDate || endDate) {
+            filter.createdAt = {};
+          
+            if (startDate) {
+              filter.createdAt.$gte = new Date(`${startDate}T00:00:00.000Z`);
+            }
+          
+            if (endDate) {
+              filter.createdAt.$lte = new Date(`${endDate}T23:59:59.999Z`);
+            }
+          }
+
+        // Filter by payment method
+        if (paymentMethod === 'bank') {
+            filter.bankDetails = { $ne: null };
+        } else if (paymentMethod === 'upi') {
+            filter.upi = { $ne: null };
+        }
+
+        console.log(filter)
+
+        const withdrawalRequests = await Withdrawal.find(filter).sort({ paymentStatus: -1, createdAt: -1 })
             .populate("userId", "firstName userId email")
             .populate("bankDetails", "accountName accountNumber IFSCCode bankName")
             .populate("upi", "upiId");

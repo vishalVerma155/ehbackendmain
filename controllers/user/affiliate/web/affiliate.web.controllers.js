@@ -174,10 +174,10 @@ const registerAffiliateWithGoogle = async (req, res) => {
             res.cookie("AccessToken", accessToken, {
                httpOnly: true,
                secure: true,
-               sameSite: 'None'
+               sameSite: 'LAX'
              });
 
-            return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register.", token: accessToken});
+            return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register."});
          }
 
          if(isUserExisted.role !== "affiliate"){
@@ -196,10 +196,10 @@ const registerAffiliateWithGoogle = async (req, res) => {
          res.cookie("AccessToken", accessToken, {
             httpOnly: true,
             secure: true,
-            sameSite: 'None'
+            sameSite: 'LAX'
           });
 
-         return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in.", token: accessToken });
+         return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in." });
       }
 
       return res.status(404).json({success: false, error: "Google id not found" });
@@ -248,11 +248,11 @@ const loginAffiliate = async (req, res) => {
       res.cookie("AccessToken", accessToken,{
          httpOnly: true,
          secure: true,
-         sameSite: 'None'
+         sameSite: 'LAX'
        });
 
       // return response
-      return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in.",  token: accessToken });
+      return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in." });
    } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
    }
@@ -501,7 +501,7 @@ const logouUser = async(req, res) =>{
       res.clearCookie('AccessToken', {
          httpOnly: true,
          secure: true,
-         sameSite: 'None'
+         sameSite: 'LAX'
        });
        return res.status(200).json({success : true, message : "User has been successfully loged out"})
    } catch (error) {

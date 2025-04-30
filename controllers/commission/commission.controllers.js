@@ -302,8 +302,8 @@ const getCommissionGiverWise = async (req, res) => {
 
         if (startDate && endDate) {
             payload.createdAt = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
+                $gte: new Date(`${startDate}T00:00:00.000Z`),
+                $lte: new Date(`${endDate}T23:59:59.999Z`)
             };
         }
 
@@ -350,8 +350,8 @@ const getCommissionGetterWise = async (req, res) => {
 
         if (startDate && endDate) {
             payload.createdAt = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
+                $gte: new Date(`${startDate}T00:00:00.000Z`),
+                $lte: new Date(`${endDate}T23:59:59.999Z`)
             };
         }
 
@@ -422,9 +422,9 @@ const commissionFilterApi = async (req, res) => {
         }
 
         if (startDate) {
-            startDate = new Date(startDate);
-            endDate = new Date(endDate);
-            endDate.setHours(23, 59, 59, 999);
+            startDate = new Date(`${startDate}T00:00:00.000Z`);
+            endDate = new Date(`${endDate}T23:59:59.999Z`);
+            
 
             if (isNaN(startDate) || isNaN(endDate)) {
                 return res.status(400).json({ success: false, message: "Invalid date format" });

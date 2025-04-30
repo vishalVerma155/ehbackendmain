@@ -266,7 +266,7 @@ const getLedger = async (req, res) => {
                 let inDateRange = true, inType = true;
 
                 if (startDate && endDate) {
-                    inDateRange = txnDate >= new Date(startDate) && txnDate <= new Date(endDate);
+                    inDateRange = txnDate >= new Date(`${startDate}T00:00:00.000Z`)  && txnDate <= new Date(`${endDate}T23:59:59.999Z`);
                 }
                 if (type) {
                     inType = txn.type === type;
