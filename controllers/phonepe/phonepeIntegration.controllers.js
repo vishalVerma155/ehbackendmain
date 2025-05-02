@@ -11,10 +11,7 @@ const clientSecret = process.env.CLINT_SECRET;
 const clientVersion = process.env.CLINT_VERSION || 1;
 const environment = process.env.NODE_ENV === 'production' ? Env.PRODUCTION : Env.SANDBOX;
 
-if (!clientId || !clientSecret) {
-    console.error("Missing CLIENT_ID or CLIENT_SECRET in environment variables");
-    process.exit(1);
-}
+
 
 const client = StandardCheckoutClient.getInstance(clientId, clientSecret, clientVersion, environment);
 const metaInfo = MetaInfo.builder()
@@ -27,15 +24,22 @@ const orderStore = new Map();
 
 const createpayment = async (req, res) => {
     try {
+     
         const { amount } = req.body;
+        
+        if (!clientId || !clientSecret) {
+            return res.status(400).json({ success: false, error: 'Missing CLIENT_ID or CLIENT_SECRET in environment variables' });
 
+        }
+        
         if (!amount || typeof amount !== 'number' || amount <= 0) {
             return res.status(400).json({ success: false, message: 'Invalid amount' });
         }
-
+        
         const merchantOrderId = randomUUID();
+        
         const redirectUrl = process.env.REDIRECT_URL;
-
+        
         const request = StandardCheckoutPayRequest.builder()
             .merchantOrderId(merchantOrderId)
             .amount(amount)
@@ -47,10 +51,13 @@ const createpayment = async (req, res) => {
 
         // Store order in memory (for demo; use a DB in production)
         orderStore.set(merchantOrderId, { amount, createdAt: new Date() });
-
+        
         res.status(200).json({
-            success: true
+            success: true,
+            paymentUrl: response.redirectUrl,
+            orderId: merchantOrderId
         });
+
     } catch (error) {
         console.error('Payment creation error:', error);
         res.status(500).json({ success: false, message: 'Failed to create payment', error: error.message });
@@ -59,9 +66,9 @@ const createpayment = async (req, res) => {
 
 const status =  async (req, res) => {
     const { orderId } = req.params;
-
+    
     if (!orderId || !orderStore.has(orderId)) {
-        return res.status(404).json({ success: false, message: 'Order not found' });
+        return res.status(404).json({ success: false, error: 'Order not found' });
     }
 
     try {
