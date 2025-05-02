@@ -24,21 +24,26 @@ const orderStore = new Map();
 
 const createpayment = async (req, res) => {
     try {
-     
+     console.log("1");
         const { amount } = req.body;
         const convertedAmount =Number(amount)*100;
+     console.log("2");
         
         if (!clientId || !clientSecret) {
             return res.status(400).json({ success: false, error: 'Missing CLIENT_ID or CLIENT_SECRET in environment variables' });
         }
+     console.log("3");
         
         if (!amount  || Number(amount) <= 0) {
             return res.status(400).json({ success: false, message: 'Invalid amount' });
         }
+     console.log("4");
         
         const merchantOrderId = randomUUID();
+     console.log("5");
         
         const redirectUrl = process.env.REDIRECT_URL;
+     console.log("6");
         
         const request = StandardCheckoutPayRequest.builder()
             .merchantOrderId(merchantOrderId)
@@ -46,11 +51,14 @@ const createpayment = async (req, res) => {
             .redirectUrl(`${redirectUrl}/${merchantOrderId}`)
             .metaInfo(metaInfo)
             .build();
+            console.log("7");
 
         const response = await client.pay(request);
+        console.log("8");
 
         // Store order in memory (for demo; use a DB in production)
         orderStore.set(merchantOrderId, { convertedAmount, createdAt: new Date() });
+     console.log("9");
         
         res.status(200).json({
             success: true,
@@ -65,15 +73,25 @@ const createpayment = async (req, res) => {
 };
 
 const status =  async (req, res) => {
+    console.log("10");
+
     const { orderId } = req.params;
     
+    console.log("11");
+
     if (!orderId || !orderStore.has(orderId)) {
         return res.status(404).json({ success: false, error: 'Order not found' });
     }
 
+    console.log("12");
+
+
     try {
         const response = await client.getOrderStatus(orderId);
+     console.log("13");
+
         const state = response.state;
+        console.log("14");
 
         res.status(200).json({
             success: true,
