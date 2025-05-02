@@ -26,13 +26,13 @@ const createpayment = async (req, res) => {
     try {
      
         const { amount } = req.body;
-        const convertedAmount = amount*100;
+        const convertedAmount =Number(amount)*100;
         
         if (!clientId || !clientSecret) {
             return res.status(400).json({ success: false, error: 'Missing CLIENT_ID or CLIENT_SECRET in environment variables' });
         }
         
-        if (!amount || typeof amount !== 'number' || amount <= 0) {
+        if (!amount  || Number(amount) <= 0) {
             return res.status(400).json({ success: false, message: 'Invalid amount' });
         }
         
