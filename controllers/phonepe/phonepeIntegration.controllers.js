@@ -76,6 +76,7 @@ const status =  async (req, res) => {
     console.log("10");
 
     const { orderId } = req.params;
+    console.log("Order", orderId)
     
     console.log("11");
 
