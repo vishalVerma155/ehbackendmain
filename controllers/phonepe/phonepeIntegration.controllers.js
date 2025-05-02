@@ -9,7 +9,7 @@ const {
 const clientId = process.env.CLINT_ID;
 const clientSecret = process.env.CLINT_SECRET;
 const clientVersion = process.env.CLINT_VERSION || 1;
-const environment = process.env.NODE_ENV === 'production' ? Env.PRODUCTION : Env.SANDBOX;
+const environment = Env.SANDBOX;
 
 
 
@@ -24,42 +24,43 @@ const orderStore = new Map();
 
 const createpayment = async (req, res) => {
     try {
-     console.log("1");
+        console.log("ENENENENterrrrr");
         const { amount } = req.body;
-        const convertedAmount =Number(amount)*100;
-     console.log("2");
-        
+        const convertedAmount = Number(amount) * 100;
+
+
         if (!clientId || !clientSecret) {
+            console.log("BBBB")
             return res.status(400).json({ success: false, error: 'Missing CLIENT_ID or CLIENT_SECRET in environment variables' });
         }
-     console.log("3");
-        
-        if (!amount  || Number(amount) <= 0) {
+
+
+        if (!amount || Number(amount) <= 0) {
             return res.status(400).json({ success: false, message: 'Invalid amount' });
         }
-     console.log("4");
-        
+
+
         const merchantOrderId = randomUUID();
-     console.log("5");
-        
+
+
         const redirectUrl = process.env.REDIRECT_URL;
-     console.log("6");
-        
+
+
         const request = StandardCheckoutPayRequest.builder()
             .merchantOrderId(merchantOrderId)
             .amount(convertedAmount)
             .redirectUrl(`${redirectUrl}/${merchantOrderId}`)
             .metaInfo(metaInfo)
             .build();
-            console.log("7");
+
 
         const response = await client.pay(request);
-        console.log("8");
+
 
         // Store order in memory (for demo; use a DB in production)
         orderStore.set(merchantOrderId, { convertedAmount, createdAt: new Date() });
-     console.log("9");
-        
+
+
         res.status(200).json({
             success: true,
             paymentUrl: response.redirectUrl,
@@ -72,42 +73,47 @@ const createpayment = async (req, res) => {
     }
 };
 
-const status =  async (req, res) => {
-    console.log("10");
+const status = async (req, res) => {
 
     const { orderId } = req.params;
-    console.log("Order", orderId)
-    
-    console.log("11");
-
+    console.log("Enter in status")
     if (!orderId || !orderStore.has(orderId)) {
         return res.status(404).json({ success: false, error: 'Order not found' });
     }
 
-    console.log("12");
-
 
     try {
         const response = await client.getOrderStatus(orderId);
-     console.log("13");
 
         const state = response.state;
-        console.log("14");
 
-        res.status(200).json({
-            success: true,
-            orderId,
-            state,
-            message:
-                state === "PENDING" ? "Payment is pending" :
-                state === "FAILED" ? "Payment failed" :
-                state === "COMPLETED" ? "Payment completed" :
-                "Unknown payment state"
-        });
+        // if (state === "PENDING") {
+        //     res.redirect('https://target-url.com')
+        // }
+
+        // if (state === "FAILED") {
+        //     res.redirect('https://target-url.com')
+        // }
+
+        if (state === "COMPLETED") {
+            // console.log("EHEHEHHEHE")
+            res.redirect(`https://earninghandle.com/home`)
+        }
+
+        // res.status(200).json({
+        //     success: true,
+        //     orderId,
+        //     state,
+        //     message:
+        //         state === "PENDING" ? "Payment is pending" :
+        //             state === "FAILED" ? "Payment failed" :
+        //                 state === "COMPLETED" ? "Payment completed" :
+        //                     "Unknown payment state"
+        // });
     } catch (error) {
         console.error('Error fetching order status:', error);
         res.status(500).json({ success: false, message: 'Failed to retrieve order status', error: error.message });
     }
 };
 
-module.exports = {createpayment, status};
+module.exports = { createpayment, status };
