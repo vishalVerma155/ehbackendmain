@@ -9,7 +9,7 @@ const router = express.Router();
 // create register receipt
 router.post("/createPayment", verifyJWT, createpayment);
 
-router.post("/checkStatus/:orderId", verifyJWT, status);
+router.get("/checkStatus/:orderId", verifyJWT, status);
 
 
 
