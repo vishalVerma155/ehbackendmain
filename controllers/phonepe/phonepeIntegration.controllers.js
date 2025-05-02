@@ -26,10 +26,10 @@ const createpayment = async (req, res) => {
     try {
      
         const { amount } = req.body;
+        const convertedAmount = amount*100;
         
         if (!clientId || !clientSecret) {
             return res.status(400).json({ success: false, error: 'Missing CLIENT_ID or CLIENT_SECRET in environment variables' });
-
         }
         
         if (!amount || typeof amount !== 'number' || amount <= 0) {
@@ -42,7 +42,7 @@ const createpayment = async (req, res) => {
         
         const request = StandardCheckoutPayRequest.builder()
             .merchantOrderId(merchantOrderId)
-            .amount(amount)
+            .amount(convertedAmount)
             .redirectUrl(`${redirectUrl}/${merchantOrderId}`)
             .metaInfo(metaInfo)
             .build();
@@ -50,7 +50,7 @@ const createpayment = async (req, res) => {
         const response = await client.pay(request);
 
         // Store order in memory (for demo; use a DB in production)
-        orderStore.set(merchantOrderId, { amount, createdAt: new Date() });
+        orderStore.set(merchantOrderId, { convertedAmount, createdAt: new Date() });
         
         res.status(200).json({
             success: true,
