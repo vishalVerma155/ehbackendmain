@@ -6,6 +6,8 @@ const {
     Env
 } = require('pg-sdk-node'); // replace with actual import
 
+const PaymentOrder = require('../../models/paymentModel/paymentOrder.model.js');
+
 const clientId = process.env.CLINT_ID;
 const clientSecret = process.env.CLINT_SECRET;
 const clientVersion = process.env.CLINT_VERSION || 1;
@@ -19,8 +21,6 @@ const metaInfo = MetaInfo.builder()
     .udf2("udf2")
     .build();
 
-// Simulated in-memory store (replace with DB or cache in production)
-const orderStore = new Map();
 
 const createpayment = async (req, res) => {
     try {
@@ -30,7 +30,6 @@ const createpayment = async (req, res) => {
 
 
         if (!clientId || !clientSecret) {
-            console.log("BBBB")
             return res.status(400).json({ success: false, error: 'Missing CLIENT_ID or CLIENT_SECRET in environment variables' });
         }
 
@@ -57,8 +56,14 @@ const createpayment = async (req, res) => {
         const response = await client.pay(request);
 
 
-        // Store order in memory (for demo; use a DB in production)
-        orderStore.set(merchantOrderId, { convertedAmount, createdAt: new Date() });
+        const order = new PaymentOrder({
+            merchantOrderId,
+            amount,
+            status: 'PENDING',
+            phonepeResponse: response
+        })
+
+        await order.save();
 
 
         res.status(200).json({
@@ -76,29 +81,38 @@ const createpayment = async (req, res) => {
 const status = async (req, res) => {
 
     const { orderId } = req.params;
-    console.log("Enter in status")
-    if (!orderId || !orderStore.has(orderId)) {
+    
+    if (!orderId) {
         return res.status(404).json({ success: false, error: 'Order not found' });
     }
 
 
     try {
-        const response = await client.getOrderStatus(orderId);
+        // const response = await client.getOrderStatus(orderId);
 
-        const state = response.state;
 
-        // if (state === "PENDING") {
-        //     res.redirect('https://target-url.com')
-        // }
+        // const state = response.state;
 
-        // if (state === "FAILED") {
-        //     res.redirect('https://target-url.com')
-        // }
+        const order = await PaymentOrder.findOne({merchantOrderId : orderId});
 
-        if (state === "COMPLETED") {
-            // console.log("EHEHEHHEHE")
-            res.redirect(`https://earninghandle.com/home`)
+        // order.status = state;
+        // order.phonepeResponse = response;
+
+        // await order.save();
+
+        if (order.status === "PENDING") {
+            res.send('Payment Pending')
         }
+
+        if (order.status === "FAILED") {
+            res.send('Payment failed')
+        }
+
+        if (order.status === "COMPLETED") {
+            res.send(`payment completed`)
+        }
+
+        // res.send(response);
 
         // res.status(200).json({
         //     success: true,
@@ -116,4 +130,39 @@ const status = async (req, res) => {
     }
 };
 
-module.exports = { createpayment, status };
+const callback = async (req, res) => {
+    try {
+        const authorizationHeaderData = req.headers['x-verify'];
+        const phonepeS2SCallbackResponseBodyString = JSON.stringify(req.body);
+
+        const usernameConfigured = process.env.MERCHANT_USERNAME;
+        const passwordConfigured = process.env.MERCHANT_PASSWORD;
+
+        const callbackResponse = client.validateCallback(
+            usernameConfigured,
+            passwordConfigured,
+            authorizationHeaderData,
+            phonepeS2SCallbackResponseBodyString
+        );
+
+        const { orderId, state } = callbackResponse.payload;
+
+        const order = await PaymentOrder.findOne({ merchantOrderId: orderId });
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        order.status = state;
+        order.phonepeResponse = callbackResponse;
+        await order.save();
+
+        res.status(200).json({ success: true, message: 'Callback processed' });
+
+    } catch (error) {
+        console.error('Callback processing error:', error);
+        res.status(500).json({ success: false, message: 'Failed to process callback', error: error.message });
+    }
+};
+
+module.exports = { createpayment, status, callback };
