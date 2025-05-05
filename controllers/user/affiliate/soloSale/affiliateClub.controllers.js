@@ -1,4 +1,4 @@
-const AffiliateClub = require('../../../../models/user/soloSale/affiliateClub.model.js');
+const AffiliateClub = require('../../../../models/user/affiliateClubModel/affiliateClub.model.js');
 const User = require('../../../../models/user/web/user.model.js');
 
 // Create a new club

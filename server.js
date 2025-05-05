@@ -22,6 +22,7 @@ const withdrawalRouter = require('./routes/vendor/withdrawal/withdrawal.routes.j
 const clubRouter = require("./routes/affiliate/affiliateClub/affiliateClub.routes.js");
 const membershipModelRouter = require("./routes/vendor/membershipModel/vendorMembership.routes.js");
 const phonePeRouter = require("./routes/phonePe/phonePe.routes.js");
+const saleEventRouter = require('./routes/saleEvent/saleEvent.routes.js')
 
 
 // Load config from env file
@@ -70,6 +71,7 @@ app.use("/deposit", depositRouter);
 app.use("/MLM", mlmRouter);
 app.use("/membership", membershipModelRouter);
 app.use("/phone", phonePeRouter);
+app.use("/saleEvent", saleEventRouter)
 
 
 

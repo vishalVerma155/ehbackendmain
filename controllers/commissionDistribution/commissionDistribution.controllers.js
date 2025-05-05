@@ -1,7 +1,7 @@
 const Campaign = require("../../models/user/vendor/marketTools/campaigns/campain.model.js");
 const User = require("../../models/user/web/user.model.js");
 const axios = require('axios');
-const AffiliateClub = require("../../models/user/soloSale/affiliateClub.model.js");
+const AffiliateClub = require("../../models/user/affiliateClubModel/affiliateClub.model.js");
 
 const distributeCommision = async (req, res) => {
 
