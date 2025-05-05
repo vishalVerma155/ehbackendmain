@@ -95,24 +95,26 @@ const status = async (req, res) => {
 
         const order = await PaymentOrder.findOne({merchantOrderId : orderId});
 
+        console.log(order);
         // order.status = state;
         // order.phonepeResponse = response;
 
         // await order.save();
 
         if (order.status === "PENDING") {
-            res.send('Payment Pending')
+            console.log('Payment Pending')
         }
 
         if (order.status === "FAILED") {
-            res.send('Payment failed')
+            console.log('Payment failed')
         }
 
         if (order.status === "COMPLETED") {
-            res.send(`payment completed`)
+            console.log(`payment completed`)
         }
 
-        // res.send(response);
+        console.log(order);
+        res.status(200).json({order});
 
         // res.status(200).json({
         //     success: true,
@@ -132,11 +134,20 @@ const status = async (req, res) => {
 
 const callback = async (req, res) => {
     try {
+        console.log("1");
         const authorizationHeaderData = req.headers['x-verify'];
+        console.log("2");
+
         const phonepeS2SCallbackResponseBodyString = JSON.stringify(req.body);
+        console.log("3");
+
 
         const usernameConfigured = process.env.MERCHANT_USERNAME;
+        console.log("4");
+
         const passwordConfigured = process.env.MERCHANT_PASSWORD;
+        console.log("5");
+
 
         const callbackResponse = client.validateCallback(
             usernameConfigured,
@@ -144,18 +155,32 @@ const callback = async (req, res) => {
             authorizationHeaderData,
             phonepeS2SCallbackResponseBodyString
         );
+        console.log("6");
+
 
         const { orderId, state } = callbackResponse.payload;
+        console.log("7");
+
 
         const order = await PaymentOrder.findOne({ merchantOrderId: orderId });
+        console.log("8");
+
 
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
+        console.log("9");
+
 
         order.status = state;
+        console.log("10");
+
         order.phonepeResponse = callbackResponse;
+        console.log("11");
+
         await order.save();
+        console.log("12");
+
 
         res.status(200).json({ success: true, message: 'Callback processed' });
 
