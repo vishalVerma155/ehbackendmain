@@ -351,7 +351,64 @@ function buildAffiliateTree(user) {
 }
 
 // auto login in any user account
-const autoLogin = (req, res) => { };
+const affiliateTreeAdmin = async(req, res) => {
+
+    try {
+        const affiliates = await User.find({ role: 'affiliate' });
+
+        const userMap = new Map();
+        affiliates.forEach(user => {
+            userMap.set(user._id.toString(), { 
+                _id: user._id,
+                userId: user.userId,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                country: user.country,
+                children: []
+            });
+        });
+
+        const roots = [];
+        const recentAffiliates = [];
+
+        affiliates.forEach(user => {
+            const userIdStr = user._id.toString();
+
+            if (user.referrer) {
+                const parent = userMap.get(user.referrer.toString());
+                if (parent) {
+                    parent.children.push(userMap.get(userIdStr));
+                }
+            } else {
+                roots.push(userMap.get(userIdStr));
+            }
+        });
+
+        // Identify affiliates with no children
+        userMap.forEach(user => {
+            if (user.children.length === 0) {
+                recentAffiliates.push(user);
+            }
+        });
+
+        res.json({
+            success: true,
+            tree: roots,
+            recentAffiliates: recentAffiliates
+        });
+
+    } catch (error) {
+        console.error('Error building affiliate tree:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to build affiliate tree',
+            error: error.message
+        });
+    }
+
+
+ };
 
 // refresh api
 const authenticationApiAdmin = (req, res) =>{
@@ -367,4 +424,4 @@ const authenticationApiAdmin = (req, res) =>{
     }
  }
 
-module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree, deleteAnyUser, editAnyUser, authenticationApiAdmin };
+module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree, deleteAnyUser, editAnyUser, authenticationApiAdmin,affiliateTreeAdmin };

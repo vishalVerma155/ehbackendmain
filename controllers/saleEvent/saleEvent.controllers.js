@@ -65,10 +65,10 @@ const totalSaleUser = async (req, res) => {
             [userRole === 'vendor' ? 'vendorId' : 'affiliateId']: new mongoose.Types.ObjectId(userId)
         };
 
-        const {startDate, endDate} = req.body;
+        const { startDate, endDate } = req.body;
 
         // Add date filter if provided
-        if (startDate || endDate) {
+        if (startDate && endDate) {
             matchFilter.timestamp = {};
             if (startDate) {
                 matchFilter.timestamp.$gte = new Date(`${startDate}T00:00:00.000Z`);
@@ -80,26 +80,131 @@ const totalSaleUser = async (req, res) => {
 
         const totalSales = await SaleEvent.aggregate([
             { $match: matchFilter },
-            { $group: {
-                _id: '$campaignId',                      // group by campaignId
-                total: { $sum: '$saleAmount' },
-                count: { $sum: 1 }
-            }},
-            { $lookup: {                                 // join campaign details (if you want names)
-                from: 'campaigns',
-                localField: '_id',
-                foreignField: '_id',
-                as: 'campaign'
-            }},
+            {
+                $group: {
+                    _id: '$campaignId',                      // group by campaignId
+                    total: { $sum: '$saleAmount' },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {                                 // join campaign details (if you want names)
+                    from: 'campaigns',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'campaign'
+                }
+            },
             { $unwind: { path: '$campaign', preserveNullAndEmptyArrays: true } },
-            { $project: {
-                campaignId: '$_id',
-                campaignName: '$campaign.name',          // or any other campaign field you want
-                totalSales: '$total',
-                saleCount: '$count'
-            }}
+            {
+                $project: {
+                    campaignId: '$_id',
+                    campaignName: '$campaign.name',          // or any other campaign field you want
+                    totalSales: '$total',
+                    saleCount: '$count'
+                }
+            },
+            {
+                $sort : {saleCount : -1}
+            }
         ]);
-        
+
+
+        return res.status(200).json({ success: true, totalSaleOfUser: totalSales })
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+const getAllSaleForAdmin = async (req, res) => {
+    try {
+
+        if (req.user.role !== "admin") {
+            return res.status(400).json({ success: false, error: "Only admin can do this" });
+        }
+
+        const { startDate, endDate, userId } = req.body;
+
+        const filter = {};
+
+        if (startDate && endDate) {
+            filter.createdAt = {
+                $gte: new Date(`${startDate}T00:00:00.000Z`),
+                $lte: new Date(`${endDate}T23:59:59.999Z`)
+            };
+        }
+
+
+        if(userId && userId !== ""){
+            filter.$or = [{affiliateId : userId}, {vendorId : userId}]
+        }
+
+
+        const saleEvents = await SaleEvent.find(filter)
+        .populate("vendorId", "firstName userName userId storeName email role")
+        .populate("affiliateId", "firstName userName userId email role")
+        .populate("campaignId", "name productPrice linkTitle mrp")
+        .sort({createdAt : -1})
+        .lean();
+
+        return res.status(200).json({success : true, saleEvents})
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+const topMostSoldProducts = async(req, res) =>{
+    try {
+
+        // Build the base match filter
+        let matchFilter = {};
+
+        const { startDate, endDate } = req.body;
+
+        // Add date filter if provided
+        if (startDate && endDate) {
+            matchFilter.createdAt = {};
+            if (startDate) {
+                matchFilter.createdAt.$gte = new Date(`${startDate}T00:00:00.000Z`);
+            }
+            if (endDate) {
+                matchFilter.createdAt.$lte = new Date(`${endDate}T23:59:59.999Z`);
+            }
+        }
+
+        const totalSales = await SaleEvent.aggregate([
+            { $match: matchFilter },
+            {
+                $group: {
+                    _id: '$campaignId',                      // group by campaignId
+                    total: { $sum: '$saleAmount' },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {                                 // join campaign details (if you want names)
+                    from: 'campaigns',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'campaign'
+                }
+            },
+            { $unwind: { path: '$campaign', preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    campaignId: '$_id',
+                    campaignName: '$campaign.name',          // or any other campaign field you want
+                    totalSales: '$total',
+                    saleCount: '$count'
+                }
+            },
+            {
+                $sort : {saleCount : -1}
+            }
+        ]);
+
 
         return res.status(200).json({ success: true, totalSaleOfUser: totalSales })
 
@@ -109,4 +214,4 @@ const totalSaleUser = async (req, res) => {
 }
 
 
-module.exports = { createSaleEvent, totalSaleUser };
+module.exports = { createSaleEvent, totalSaleUser, getAllSaleForAdmin, topMostSoldProducts };
