@@ -1,6 +1,6 @@
 
 const express = require('express');
-const {registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, getAffiliateTree,editAnyUser, deleteAnyUser, authenticationApiAdmin, affiliateTreeAdmin} = require('../../controllers/admin/web/admin.web.controllers.js');
+const {registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, editAnyUser, deleteAnyUser, authenticationApiAdmin, getFullAffiliateTree} = require('../../controllers/admin/web/admin.web.controllers.js');
 const verifyJWT = require('../../middleware/authMiddleware.js');
 
 
@@ -24,7 +24,7 @@ router.get("/searchUser",verifyJWT, searchUser );
 router.patch("/changeAdminPassword", verifyJWT, changeAdminPassword);
 
 // get affiliate tree
-router.get("/affiliateTree/:userId", getAffiliateTree);
+// router.get("/affiliateTree/:userId", getAffiliateTree);
 
 // delete any user
 router.delete("/deleteAnyUser/:userId", verifyJWT, deleteAnyUser );
@@ -35,7 +35,7 @@ router.patch("/editAnyUser/:userId", verifyJWT, editAnyUser);
 // authentication api
 router.get("/adminAuthentication", verifyJWT, authenticationApiAdmin);
 
-router.get("/getAllAffiliateTree", verifyJWT, affiliateTreeAdmin)
+router.get("/getAllAffiliateTree", verifyJWT, getFullAffiliateTree)
 
 
 module.exports = router;
