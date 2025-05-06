@@ -82,32 +82,51 @@ const totalSaleUser = async (req, res) => {
             { $match: matchFilter },
             {
                 $group: {
-                    _id: '$campaignId',                      // group by campaignId
+                    _id: '$campaignId',
                     total: { $sum: '$saleAmount' },
                     count: { $sum: 1 }
                 }
             },
             {
-                $lookup: {                                 // join campaign details (if you want names)
+                $lookup: {
                     from: 'campaigns',
                     localField: '_id',
                     foreignField: '_id',
                     as: 'campaign'
                 }
             },
-            { $unwind: { path: '$campaign', preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: '$campaign', preserveNullAndEmptyArrays: true } },  // move unwind here BEFORE user lookup
+        
+            {
+                $lookup: {
+                    from: 'users',                           // assuming collection name is 'users'
+                    localField: 'campaign.userId',
+                    foreignField: '_id',
+                    as: 'campaignUser'
+                }
+            },
+            { $unwind: { path: '$campaignUser', preserveNullAndEmptyArrays: true } },
+        
             {
                 $project: {
                     campaignId: '$_id',
-                    campaignName: '$campaign.name',          // or any other campaign field you want
+                    campaignName: '$campaign.name',
+                    campaignTargetLink: '$campaign.campaignTargetLink',
+                    campaignPrice: '$campaign.productPrice',
+                    campaignImage: '$campaign.image',
+                    campaignStatus: '$campaign.status',
+                    campaignUserId: '$campaign.userId',
+                    campaignUserName: '$campaignUser.firstName',
+                    campaignUserEmail: '$campaignUser.email',
                     totalSales: '$total',
                     saleCount: '$count'
                 }
             },
             {
-                $sort : {saleCount : -1}
+                $sort: { saleCount: -1 }
             }
         ]);
+        
 
 
         return res.status(200).json({ success: true, totalSaleOfUser: totalSales })
@@ -136,26 +155,26 @@ const getAllSaleForAdmin = async (req, res) => {
         }
 
 
-        if(userId && userId !== ""){
-            filter.$or = [{affiliateId : userId}, {vendorId : userId}]
+        if (userId && userId !== "") {
+            filter.$or = [{ affiliateId: userId }, { vendorId: userId }]
         }
 
 
         const saleEvents = await SaleEvent.find(filter)
-        .populate("vendorId", "firstName userName userId storeName email role")
-        .populate("affiliateId", "firstName userName userId email role")
-        .populate("campaignId", "name productPrice linkTitle mrp")
-        .sort({createdAt : -1})
-        .lean();
+            .populate("vendorId", "firstName userName userId storeName email role")
+            .populate("affiliateId", "firstName userName userId email role")
+            .populate("campaignId", "name productPrice linkTitle mrp")
+            .sort({ createdAt: -1 })
+            .lean();
 
-        return res.status(200).json({success : true, saleEvents})
+        return res.status(200).json({ success: true, saleEvents })
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
 }
 
-const topMostSoldProducts = async(req, res) =>{
+const topMostSoldProducts = async (req, res) => {
     try {
 
         // Build the base match filter
@@ -201,7 +220,7 @@ const topMostSoldProducts = async(req, res) =>{
                 }
             },
             {
-                $sort : {saleCount : -1}
+                $sort: { saleCount: -1 }
             }
         ]);
 
