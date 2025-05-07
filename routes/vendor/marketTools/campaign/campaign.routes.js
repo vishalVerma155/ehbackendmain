@@ -10,10 +10,16 @@ const {upload} = require('../../../../utils/multer.js');
 const router = express.Router();
 
 // create campaign
-router.post("/createCampaign", verifyJWT, upload.single('campaignImage'), createCampaign);
+router.post("/createCampaign", verifyJWT, upload.fields([
+    { name: 'campaignImage', maxCount: 1 },
+    { name: 'bannerImage', maxCount: 1 }
+  ]), createCampaign);
 
 // edit marketing program
-router.patch("/editCampaign/:campaignId", verifyJWT,upload.single('campaignImage'), editCampaign);
+router.patch("/editCampaign/:campaignId", verifyJWT, upload.fields([
+    { name: 'campaignImage', maxCount: 1 },
+    { name: 'bannerImage', maxCount: 1 }
+  ]), editCampaign);
 
 // get all programs
 router.post("/getAllCampaignForAdmin", verifyJWT, getAllCampaignsForAdmin);

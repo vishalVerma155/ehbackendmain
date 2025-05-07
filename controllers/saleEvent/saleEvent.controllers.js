@@ -96,7 +96,6 @@ const totalSaleUser = async (req, res) => {
                 }
             },
             { $unwind: { path: '$campaign', preserveNullAndEmptyArrays: true } },  // move unwind here BEFORE user lookup
-        
             {
                 $lookup: {
                     from: 'users',                           // assuming collection name is 'users'
@@ -106,7 +105,7 @@ const totalSaleUser = async (req, res) => {
                 }
             },
             { $unwind: { path: '$campaignUser', preserveNullAndEmptyArrays: true } },
-        
+
             {
                 $project: {
                     campaignId: '$_id',
@@ -126,7 +125,7 @@ const totalSaleUser = async (req, res) => {
                 $sort: { saleCount: -1 }
             }
         ]);
-        
+
 
 
         return res.status(200).json({ success: true, totalSaleOfUser: totalSales })

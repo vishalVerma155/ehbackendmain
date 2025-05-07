@@ -1,14 +1,17 @@
 const Campaign = require('../../../../../models/user/vendor/marketTools/campaigns/campain.model.js');
 const User = require('../../../../../models/user/web/user.model.js');
 const Program = require('../../../../../models/user/vendor/marketTools/programs/program.model.js')
-const {encryprDecryptMethod} = require("../../../../../utils/crypto.js");
+const { encryprDecryptMethod } = require("../../../../../utils/crypto.js");
+const axios = require('axios');
+
 
 const createCampaign = async (req, res) => {
 
     try {
 
         const userId = req.user._id;
-        const img = req.file?.path || undefined; // get image
+        const img = req.files['campaignImage'] ? req.files['campaignImage'][0].path : undefined;
+        const bannerImage = req.files['bannerImage'] ? req.files['bannerImage'][0].path : undefined;
 
 
         if (!userId) {
@@ -16,14 +19,14 @@ const createCampaign = async (req, res) => {
         }
 
 
-        const { toolType, name, campaignTargetLink, linkTitle } = req.body;
+        const { toolType, name, campaignTargetLink, linkTitle, campaignType } = req.body;
 
 
-        const isBlank = [toolType, name, campaignTargetLink, linkTitle].some((field) => field.trim() === "");
+        const isBlank = [toolType, name, campaignTargetLink, linkTitle, campaignType].some((field) => field.trim() === "");
 
 
         if (isBlank) {
-            return res.status(404).json({ success: false, error: "Tool type, Name, Campaign Target Link, Product Price, Link Title are compulsary" });
+            return res.status(404).json({ success: false, error: "Campaign type, Tool type, Name, Campaign Target Link, Product Price, Link Title are compulsary" });
         }
 
 
@@ -32,6 +35,7 @@ const createCampaign = async (req, res) => {
         const campaign = new Campaign({
             userId,
             image: img,
+            bannerImage: bannerImage,
             ...data
         });
 
@@ -64,11 +68,11 @@ const createCampaign = async (req, res) => {
 const getAllCampaignsForAdmin = async (req, res) => {
     try {
 
-        if(req.user.role !== "admin"){
+        if (req.user.role !== "admin") {
             return res.status(500).json({ success: false, error: "Only admin can do this" });
         }
 
-        const { name, status, category, userId } = req.body;
+        const { name, status, category, userId, campaignType } = req.body;
 
         const filter = {};
 
@@ -80,12 +84,16 @@ const getAllCampaignsForAdmin = async (req, res) => {
             filter.status = status;
         }
 
+        if (campaignType && campaignType.trim() !== "") {
+            filter.campaignType = campaignType;
+        }
+
         if (category && category.trim() !== "") {
             const categoriesArray = category.split(",");
             filter.categories = { $in: categoriesArray };
         }
 
-        if(userId && userId.trim() !== ""){
+        if (userId && userId.trim() !== "") {
             filter.userId = userId;
         }
 
@@ -101,13 +109,24 @@ const editCampaign = async (req, res) => {
     try {
         const campaignId = req.params.campaignId;
         const data = req.body;
-        const img = req.file?.path || undefined; // get image
+        const img = req.files['campaignImage'] ? req.files['campaignImage'][0].path : undefined;
+        const bannerImage = req.files['bannerImage'] ? req.files['bannerImage'][0].path : undefined;
 
         if (!campaignId) {
             return res.status(404).json({ success: false, error: "campaign Id not found" });
         }
 
-        const updatedCampaign = await Campaign.findByIdAndUpdate(campaignId, data, { new: true });
+        const fileds = {...data};
+
+        if(img){
+            fileds.campaignImage = img;
+        }
+
+        if(bannerImage){
+            fileds.bannerImage = bannerImage;
+        }
+
+        const updatedCampaign = await Campaign.findByIdAndUpdate(campaignId, fileds, { new: true });
 
         if (!updatedCampaign) {
             return res.status(500).json({ success: false, error: "Campaign not found" });
@@ -120,25 +139,25 @@ const editCampaign = async (req, res) => {
 
 }
 
-const urlEncode = async(req, res) =>{
+const urlEncode = async (req, res) => {
     try {
-        const affiliateId = req.user._id;
-        
-        const {productId, campaignTargetLink} = req.body;
-        
-        const payload = JSON.stringify({ affiliateId, productId, campaignTargetLink });
-       
-        const encrypted = encryprDecryptMethod(payload, 'encrypt');
-       
 
-        return res.status(200).json({success : true, url :  `http://localhost:4500/vendor/track?data=${encodeURIComponent(encrypted)}` });
+        const affiliateId = req.user._id;
+
+        const { productId, campaignTargetLink } = req.body;
+
+        const payload = JSON.stringify({ affiliateId, productId, campaignTargetLink });
+
+        const encrypted = encryprDecryptMethod(payload, 'encrypt');
+
+        return res.status(200).json({ success: true, url: `http://localhost:4500/vendor/track?data=${encodeURIComponent(encrypted)}` });
     } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });  
+        return res.status(500).json({ success: false, error: error.message });
     }
 }
 
-const tracker = async(req, res) =>{
-    
+const tracker = async (req, res) => {
+
     const { data } = req.query;
 
     if (!data) return res.status(400).send("Invalid tracking link");
@@ -184,8 +203,8 @@ const getCampainListForVendor = async (req, res) => {
 
         filter.userId = userId;
 
-        const { name, status, category } = req.body;
-        
+        const { name, status, category, campaignType } = req.body;
+
 
         if (name && name.trim() !== "") {
             filter.name = { $regex: name, $options: "i" }; // case-insensitive search
@@ -195,6 +214,10 @@ const getCampainListForVendor = async (req, res) => {
             filter.status = status;
         }
 
+        if (campaignType && campaignType.trim() !== "") {
+            filter.campaignType = campaignType;
+        }
+
         if (category && category.trim() !== "") {
             const categoriesArray = category.split(",");
             filter.categories = { $in: categoriesArray };
@@ -202,7 +225,7 @@ const getCampainListForVendor = async (req, res) => {
 
         const campaigns = await Campaign.find(filter);
 
-        return res.status(200).json({ success: true, campaignList : campaigns });
+        return res.status(200).json({ success: true, campaignList: campaigns });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
@@ -213,18 +236,22 @@ const getCampainListForVendor = async (req, res) => {
 const getCampainListForAffiliate = async (req, res) => {
     try {
 
-        if(req.user.role !== "affiliate"){
-            return res.status(400).json({success : false, error : "Only affiliate can get this"})
+        if (req.user.role !== "affiliate") {
+            return res.status(400).json({ success: false, error: "Only affiliate can get this" })
         }
         const filter = {};
 
         filter.status = "public";
 
-        const { name, category } = req.body;
-        
+        const { name, category, campaignType } = req.body;
+
 
         if (name && name.trim() !== "") {
             filter.name = { $regex: name, $options: "i" }; // case-insensitive search
+        }
+
+        if (campaignType && campaignType.trim() !== "") {
+            filter.campaignType = campaignType;
         }
 
         if (category && category.trim() !== "") {
@@ -234,7 +261,7 @@ const getCampainListForAffiliate = async (req, res) => {
 
         const campaigns = await Campaign.find(filter);
 
-        return res.status(200).json({ success: true, campaignList : campaigns });
+        return res.status(200).json({ success: true, campaignList: campaigns });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });

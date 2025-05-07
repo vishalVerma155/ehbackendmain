@@ -8,6 +8,12 @@ const campaignSchema = new mongoose.Schema({
         default: "saleIntegration",
         trim: true
     },
+    campaignType: {
+        type: String,
+        required: true,
+        enum: ["bannerCampaign", "textCampaign", "linkCampaign", "videoCampaign"],
+        trim: true
+    },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",
@@ -33,7 +39,7 @@ const campaignSchema = new mongoose.Schema({
     },
     mrp: {
         type: Number,
-        min : 0
+        min: 0
     },
     productPrice: {
         type: Number,
@@ -63,10 +69,6 @@ const campaignSchema = new mongoose.Schema({
         type: String, // URL or file path
         trim: true
     },
-    content: {
-        type: String,
-        trim: true
-    },
     allowForAffiliate: {
         type: String,
         enum: ["all", "selected"],
@@ -87,7 +89,44 @@ const campaignSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "MarketingProgram",
         required: true
+    },
+    content: {
+        type: String,
+        trim: true
+    },
+    textSize: { 
+        type: String,
+        trim: true
+    },
+    textColor: { 
+        type: String,
+        trim: true
+    },
+    backgroundColor: {
+        type: String,
+        trim: true
+    },
+    bannerImage: { 
+        type: String,
+        trim: true
+    },
+    campaignHeight: { 
+        type: String,
+        trim: true
+    },
+    campaignWidth: { 
+        type: String,
+        trim: true
+    },
+    videoLink: {
+        type: String,
+        trim: true
+    },
+    buttonText : {
+        type : String,
+        trim : true
     }
+    
 }, { timestamps: true });
 
 const Campaign = mongoose.model("campaign", campaignSchema);
