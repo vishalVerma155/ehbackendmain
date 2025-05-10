@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 
 const createSaleEvent = async (req, res) => {
     try {
-        const { vendorId, affiliateId, campaignId, saleAmount } = req.body;
+        const { vendorId, affiliateId, campaignId, saleAmount, saleType } = req.body;
 
         if (!vendorId || vendorId.trim() === "") {
             return res.status(400).json({ success: false, error: 'Invalid Vendor Id' });
@@ -16,6 +16,10 @@ const createSaleEvent = async (req, res) => {
         }
         if (!campaignId || campaignId.trim() === "") {
             return res.status(400).json({ success: false, error: 'Invalid Campaign Id' });
+        }
+
+        if (!saleType || saleType.trim() === "") {
+            return res.status(400).json({ success: false, error: 'Sale type required' });
         }
 
         // Check if IDs exist
@@ -44,7 +48,8 @@ const createSaleEvent = async (req, res) => {
             vendorId,
             affiliateId,
             campaignId,
-            saleAmount
+            saleAmount,
+            saleType
         });
         await sale.save();
 
@@ -84,7 +89,17 @@ const totalSaleUser = async (req, res) => {
                 $group: {
                     _id: '$campaignId',
                     total: { $sum: '$saleAmount' },
-                    count: { $sum: 1 }
+                    count: { $sum: 1 },
+                    soloSaleCount: {
+                        $sum: {
+                            $cond: [{ $eq: ["$saleType", "soloSale"] }, 1, 0]
+                        }
+                    },
+                    mlmCount: {
+                        $sum: {
+                            $cond: [{ $eq: ["$saleType", "mlm"] }, 1, 0]
+                        }
+                    }
                 }
             },
             {
@@ -118,8 +133,10 @@ const totalSaleUser = async (req, res) => {
                     campaignUserName: '$campaignUser.firstName',
                     campaignUserEmail: '$campaignUser.email',
                     totalSales: '$total',
-                    saleCount: '$count'
-                }
+                    saleCount: '$count',
+                    totalSoloSale: userRole === 'affiliate' ? '$soloSaleCount' : undefined,
+                    totalMLMSale : userRole === 'affiliate' ? "$mlmCount" : undefined
+                 }
             },
             {
                 $sort: { saleCount: -1 }

@@ -17,6 +17,10 @@ const saleEventSchema = new mongoose.Schema({
     saleAmount:{
         type : Number
     },
+    saleType : {
+        type : String,
+        enum : ["mlm", "soloSale"]
+    },
     saleStatus : {
         type : String,
         enum : ["completed", "pending"],
