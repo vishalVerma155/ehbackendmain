@@ -235,6 +235,10 @@ const getVendorProfile = async (req, res) => {
 const editVendor = async (req, res) => {
 
     try {
+
+        if(req.user.role !== "vendor"){
+            return res.status(404).json({ success: false, error: "Only vender can do this"});
+        }
         const { firstName, lastName, storeName, country, address } = req.body;
         const user = req.user._id;
         const img = req.file?.path || undefined; // get image
@@ -256,6 +260,10 @@ const editVendor = async (req, res) => {
 
         if (storeName) {
             payload.storeName = storeName;
+        }
+
+        if (clubName) {
+            payload.clubName = clubName;
         }
 
         if (country) {

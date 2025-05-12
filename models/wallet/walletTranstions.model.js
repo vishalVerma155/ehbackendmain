@@ -13,7 +13,7 @@ const walletTransactionSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ["deposit", "commission_payment", "commission_received", "withdrawal", "soloSaleCommission"],
+        enum: ["deposit", "commission_payment", "commission_received", "withdrawal", "soloSaleCommission", "membership_purchase"],
         required: true
     },
     amount: {

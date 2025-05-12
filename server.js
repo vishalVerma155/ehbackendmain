@@ -29,7 +29,7 @@ const saleEventRouter = require('./routes/saleEvent/saleEvent.routes.js')
 require("dotenv").config();
 const PORT = process.env.PORT || 4000;
 
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://127.0.0.1:5501'];
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://127.0.0.1:5501', 'https://c1z89hm1-5173.inc1.devtunnels.ms/'];
 
 // Middleware to parse JSON requests
 app.use(express.json());

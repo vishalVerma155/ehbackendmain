@@ -295,6 +295,10 @@ const editAffiliate = async (req, res) => {
          return res.status(500).json({ success: false, error: "Affiliate is not loged in" });
       }
 
+      if( req.user.role !== "admin" && clubName){
+         return res.status(500).json({ success: false, error: "Sorry club will be updated according to your performance" });
+      }
+
       let payload = {};
       if (firstName) {
          payload.firstName = firstName;

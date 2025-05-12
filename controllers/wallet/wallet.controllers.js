@@ -63,20 +63,15 @@ const getWallterCurrUser = async (req, res) => {
 
 
 const addTranstionData = async (req, res) => {
-    console.log("1");
     const session = await mongoose.startSession();
     session.startTransaction();
-    console.log("2");
+   
 
     try {
-        console.log("3");
-
         const { transactionId, amount, status, commissionReceipt, giverId, getterId } = req.body;
-        console.log("4");
 
         // Validation
         const isBlank = [transactionId, String(amount), status, commissionReceipt].some((field) => field.trim() === "");
-        console.log("5");
 
         if (isBlank) {
             await session.abortTransaction();
@@ -86,40 +81,38 @@ const addTranstionData = async (req, res) => {
                 error: "transactionId, amount, status, commissionReceipt are required.",
             });
         }
-        console.log("6");
 
         // Fetch wallets
         const getterWallet = await Wallet.findOne({ userId: getterId }).session(session);
-        console.log("7");
-
+      
         if (!getterWallet) {
             await session.abortTransaction();
             session.endSession();
             return res.status(404).json({ success: false, error: "Getter wallet not found" });
         }
-        console.log("8");
+        
 
         const giverWallet = await Wallet.findOne({ userId: giverId }).session(session);
-        console.log("9");
+      
 
         if (!giverWallet) {
             await session.abortTransaction();
             session.endSession();
             return res.status(404).json({ success: false, error: "Giver wallet not found" });
         }
-        console.log("10");
+       
 
         if (giverWallet.balance < Number(amount)) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({ success: false, error: "Insufficient balance in giver wallet" });
         }
-        console.log("11");
+       
 
         // Update giver's wallet balance
         giverWallet.balance -= Number(amount);
         await giverWallet.save({ session });
-        console.log("12");
+     
 
         // Create giver's wallet transaction
         const giverTransaction = new WalletTransaction({
@@ -133,15 +126,14 @@ const addTranstionData = async (req, res) => {
                 commissionReceipt
             }
         });
-        console.log("13");
 
         await giverTransaction.save({ session });
-        console.log("14");
+       
 
         // Update getter's wallet balance
         getterWallet.balance += Number(amount);
         await getterWallet.save({ session });
-        console.log("15");
+       
 
         // Create getter's wallet transaction
         const getterTransaction = new WalletTransaction({
@@ -156,11 +148,11 @@ const addTranstionData = async (req, res) => {
             }
         });
         await getterTransaction.save({ session });
-        console.log("16");
+     
 
         await session.commitTransaction();
         session.endSession();
-        console.log("17");
+     
 
         return res.status(200).json({
             success: true,

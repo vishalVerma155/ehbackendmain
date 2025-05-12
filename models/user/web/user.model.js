@@ -62,6 +62,15 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
+    membership: {
+        type: Boolean,
+        trim: true,
+        default : false
+    },
+    membershipName: {
+        type: String,
+        trim: true,
+    },
     googleId: {
         type: String,
         trim: true,

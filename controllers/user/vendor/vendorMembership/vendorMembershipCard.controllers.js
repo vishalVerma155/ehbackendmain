@@ -1,83 +1,156 @@
-const VendorMembershipCard = require('../../../../models/user/vendor/vendorMembershipModel/vendorMembershipCard.model.js');
+// const VendorMembershipCard = require('../../../../models/user/vendor/vendorMembershipModel/vendorMembershipCard.model.js');
+const VendorMembership = require('../../../../models/user/vendor/vendorMembershipModel/vendorMembership.model.js');
+const Wallet = require('../../../../models/wallet/wallet.model.js');
+const WalletTransaction = require('../../../../models/wallet/walletTranstions.model.js');
+const User = require('../../../../models/user/web/user.model.js');
+const crypto = require('crypto');
+const mongoose = require('mongoose');
 
-// CREATE Membership Card
-const createMembershipCard = async (req, res) => {
+
+
+const purchaseMembership = async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
-    const { user, selectedMembershipPlan, paymentDone } = req.body;
+  session.startTransaction();
 
-    // Add isDone: false to each feature
-    const enrichedFeatures = selectedMembershipPlan.features.map(f => ({
-      featureHeading: f,
-      isDone: false,
-    }));
+    if (req.user.role !== 'vendor') {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({ success: false, error: "Only vendors can perform this action." });
+    }
+    
+    const { membershipName } = req.body;
+    
+    const userId = req.user._id;
+    
+    if (!membershipName || membershipName.trim() === "") {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ success: false, error: "Membership name is required." });
+    }
 
-    const card = new VendorMembershipCard({
-      user,
-      selectedMembershipPlan: {
-        heading: selectedMembershipPlan.heading,
-        subHeading: selectedMembershipPlan.subHeading,
-        price: selectedMembershipPlan.price,
-        features: enrichedFeatures
-      },
-      paymentDone
+    const [vendor, membership, wallet] = await Promise.all([
+      User.findById(userId).session(session),
+      VendorMembership.findOne({ heading: membershipName }).session(session),
+      Wallet.findOne({ userId }).select('-transactions').session(session)
+    ]);
+
+    if (!vendor) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ success: false, error: 'Invalid vendorId.' });
+    }
+
+    
+    if (!membership) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ success: false, error: "Membership not found." });
+    }
+
+    if (!wallet) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ success: false, error: "Vendor's wallet not found." });
+    }
+
+    if (wallet.balance < membership.price) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ success: false, error: "Insufficient funds." });
+    }
+
+    wallet.balance -= Number(membership.price);
+    await wallet.save({ session });
+
+    const walletTransaction = new WalletTransaction({
+      userId,
+      transactionId: crypto.randomBytes(12).toString('hex'),
+      type: "membership_purchase",
+      amount: Number(membership.price),
+      drCr: "DR",
+      status: "paid"
     });
 
-    await card.save();
-    res.status(201).json({ success: true, data: card });
+    await walletTransaction.save({ session });
+
+    vendor.membershipName = membershipName;
+    vendor.membership = true;
+    await vendor.save({ session });
+    
+    await session.commitTransaction();
+    session.endSession();
+    
+    return res.status(200).json({ success: true, message: "You have successfully purchased membership." });
+
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    await session.abortTransaction();
+    session.endSession();
+    res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// CREATE Membership Card
+// const purchaseMembership = async (req, res) => {
+//   try {
+//     if (req.user.role !== 'vendor') {
+//       return res.status(400).json({ success: false, error: "Only vendor can do this." })
+//     }
+//     const { membershipName } = req.body;
+//     const userId = req.user._id;
+
+//     if (!membershipName || membershipName.trim() === "") {
+//       return res.status(400).json({ success: false, error: "Membershi name is required" })
+//     }
+
+//     const [vendor, membership, wallet] = await Promise.all([
+//       User.findById(userId),
+//       VendorMembership.findOne({ heading: membershipName }),
+//       Wallet.findOne({ userId })
+//     ]);
+
+//     if (!vendor) {
+//       return res.status(400).json({ success: false, error: 'Invalid vendorId' });
+//     }
+
+//     if (!membership) {
+//       return res.status(400).json({ success: false, error: "There is not any membership existed." })
+//     }
+
+//     if (!wallet) {
+//       return res.status(400).json({ success: false, error: "Vendor's wallet not found." })
+//     }
+
+//     if (wallet.balance < membership.price) {
+//       return res.status(400).json({ success: false, error: "Insufficient funds." })
+//     }
+
+//     wallet.balance -= Number(membership.price);
+//     await wallet.save();
+
+//     const walletTrans = new WalletTranstion({
+//       userId,
+//       transactionId: 'TXN_' + crypto.randomBytes(8).toString('hex'),
+//       type: "membership_purchase",
+//       amount: Number(membership.price),
+//       drCr: "DR",
+//       status: "paid"
+//     });
+
+//     await walletTrans.save();
+
+//     vendor.membershipName = membershipName;
+//     vendor.membership = true;
+//     await vendor.save();
+
+//     return res.status(200).json({ success: true, messgae: "You have successfully purchased membership." })
+
+//   } catch (err) {
+//     res.status(400).json({ success: false, message: err.message });
+//   }
+// };
 
 // READ All Membership Cards
-const getAllMembershipCards = async (req, res) => {
-  try {
-    const cards = await VendorMembershipCard.find().populate('user');
-    res.status(200).json({ success: true, data: cards });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
 
-// READ Single Membership Card by ID
-const getMembershipCardById = async (req, res) => {
-  try {
-    const card = await VendorMembershipCard.findById(req.params.id).populate('user');
-    if (!card) {
-      return res.status(404).json({ success: false, message: 'Card not found' });
-    }
-    res.status(200).json({ success: true, data: card });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-// UPDATE Membership Card (Features, Payment)
-const updateMembershipCard = async (req, res) => {
-  try {
-    const card = await VendorMembershipCard.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-    if (!card) {
-      return res.status(404).json({ success: false, message: 'Card not found' });
-    }
-    res.status(200).json({ success: true, data: card });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
-  }
-};
-
-// DELETE Membership Card
-const deleteMembershipCard = async (req, res) => {
-  try {
-    const card = await VendorMembershipCard.findByIdAndDelete(req.params.id);
-    if (!card) {
-      return res.status(404).json({ success: false, message: 'Card not found' });
-    }
-    res.status(200).json({ success: true, message: 'Card deleted' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
+module.exports = {purchaseMembership};
