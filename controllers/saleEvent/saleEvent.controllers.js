@@ -99,6 +99,12 @@ const totalSaleUser = async (req, res) => {
                         $sum: {
                             $cond: [{ $eq: ["$saleType", "mlm"] }, 1, 0]
                         }
+                    },
+                    sales: {
+                        $push: {            
+                            amount: '$saleAmount',
+                            date: '$createdAt'           
+                        }
                     }
                 }
             },
@@ -135,8 +141,9 @@ const totalSaleUser = async (req, res) => {
                     totalSales: '$total',
                     saleCount: '$count',
                     totalSoloSale: userRole === 'affiliate' ? '$soloSaleCount' : undefined,
-                    totalMLMSale : userRole === 'affiliate' ? "$mlmCount" : undefined
-                 }
+                    totalMLMSale: userRole === 'affiliate' ? "$mlmCount" : undefined,
+                    sales: 1
+                }
             },
             {
                 $sort: { saleCount: -1 }
