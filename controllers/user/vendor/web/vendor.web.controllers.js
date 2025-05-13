@@ -4,6 +4,7 @@ const generateJWT = require('../../../../utils/jwt.js');
 const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js');
 const axios = require("axios");
 const UAParser = require('ua-parser-js');
+const {generateTokenVersion} = require('../../../../utils/crypto.js');
 
 // register vendor with email id and password
 const registerVendor = async (req, res) => {
@@ -34,6 +35,7 @@ const registerVendor = async (req, res) => {
         }
 
         const hashedPassword = await hashPassword(password);
+        
         // create Vendor
         const newUser = new User({
             firstName,
@@ -178,7 +180,13 @@ const loginVendor = async (req, res) => {
         }
 
         // compare password
+        const rawToken = generateTokenVersion();
         const isPasswordCorrect = await comparePassword(password, user.password);
+        const hashedTokenVersion = await hashPassword(rawToken);
+
+
+        user.tokenVersion = hashedTokenVersion;
+        await user.save();
 
         if (!isPasswordCorrect) {
             return res.status(401).json({ success: false, error: "Invalid password" });
@@ -187,7 +195,8 @@ const loginVendor = async (req, res) => {
         const payload = {
             _id: user._id,
             email: user.email,
-            role: user.role
+            role: user.role,
+            tokenVersion : rawToken
         }
 
         // generate jwt token

@@ -30,4 +30,9 @@ const encryprDecryptMethod = (string, action) => {
 
 }
 
-module.exports = {encryprDecryptMethod};
+
+function generateTokenVersion(length = 8) {
+  return crypto.randomBytes(length).toString('hex'); 
+}
+
+module.exports = {encryprDecryptMethod, generateTokenVersion};

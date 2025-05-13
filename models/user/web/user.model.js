@@ -95,6 +95,9 @@ const userSchema = new mongoose.Schema({
     image: {
         type: String
     },
+    tokenVersion: {
+        type: String
+    },
     referrer: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",
