@@ -4,7 +4,7 @@ const generateJWT = require('../../../../utils/jwt.js');
 const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js');
 const axios = require("axios");
 const UAParser = require('ua-parser-js');
-const {generateTokenVersion} = require('../../../../utils/crypto.js');
+const { generateTokenVersion } = require('../../../../utils/crypto.js');
 
 // register vendor with email id and password
 const registerVendor = async (req, res) => {
@@ -35,7 +35,7 @@ const registerVendor = async (req, res) => {
         }
 
         const hashedPassword = await hashPassword(password);
-        
+
         // create Vendor
         const newUser = new User({
             firstName,
@@ -111,11 +111,18 @@ const registerVendorWithGoogle = async (req, res) => {
 
                 const wallet = await axios.post(`https://ehbackendmain.onrender.com/wallet/createWallet/${newUser._id}`);
 
+                const rawToken = generateTokenVersion();
+                const hashedTokenVersion = await hashPassword(rawToken);
+
                 const payload = {
                     _id: newUser._id,
                     email: newUser.email,
-                    role: newUser.role
+                    role: newUser.role,
+                    tokenVersion: rawToken
                 }
+
+                newUser.tokenVersion = hashedTokenVersion;
+                await newUser.save();
 
                 // generate jwt token
                 const accessToken = generateJWT(payload);
@@ -124,7 +131,7 @@ const registerVendorWithGoogle = async (req, res) => {
                     httpOnly: true,
                     secure: true,
                     sameSite: 'LAX'
-                  });
+                });
 
                 return res.status(200).json({ success: true, Message: "Vendor has been sucessfully register." });
             }
@@ -133,11 +140,18 @@ const registerVendorWithGoogle = async (req, res) => {
                 return res.status(401).json({ success: false, error: "Invalid user." });
             }
 
+            const rawToken = generateTokenVersion();
+            const hashedTokenVersion = await hashPassword(rawToken);
+
             const payload = {
                 _id: isUserExisted._id,
                 email: isUserExisted.email,
-                role: isUserExisted.role
+                role: isUserExisted.role,
+                tokenVersion: rawToken
             }
+
+            isUserExisted.tokenVersion = hashedTokenVersion;
+            await isUserExisted.save();
 
             // generate jwt token
             const accessToken = generateJWT(payload);
@@ -146,7 +160,7 @@ const registerVendorWithGoogle = async (req, res) => {
                 httpOnly: true,
                 secure: true,
                 sameSite: 'LAX'
-              });
+            });
 
 
             return res.status(200).json({ success: true, Message: "vendor has been  sucessfully Loged in." });
@@ -181,8 +195,8 @@ const loginVendor = async (req, res) => {
 
         // compare password
         const rawToken = generateTokenVersion();
-        const isPasswordCorrect = await comparePassword(password, user.password);
         const hashedTokenVersion = await hashPassword(rawToken);
+        const isPasswordCorrect = await comparePassword(password, user.password);
 
 
         user.tokenVersion = hashedTokenVersion;
@@ -196,7 +210,7 @@ const loginVendor = async (req, res) => {
             _id: user._id,
             email: user.email,
             role: user.role,
-            tokenVersion : rawToken
+            tokenVersion: rawToken
         }
 
         // generate jwt token
@@ -206,7 +220,7 @@ const loginVendor = async (req, res) => {
             httpOnly: true,
             secure: true,
             sameSite: 'None'
-          });
+        });
 
         // return response
         return res.status(200).json({ success: true, Message: "Vendor has been sucessfully Loged in." });
@@ -245,8 +259,8 @@ const editVendor = async (req, res) => {
 
     try {
 
-        if(req.user.role !== "vendor"){
-            return res.status(404).json({ success: false, error: "Only vender can do this"});
+        if (req.user.role !== "vendor") {
+            return res.status(404).json({ success: false, error: "Only vender can do this" });
         }
         const { firstName, lastName, storeName, country, address } = req.body;
         const user = req.user._id;
@@ -283,7 +297,7 @@ const editVendor = async (req, res) => {
             payload.address = address;
         }
 
-        if(img){
+        if (img) {
             payload.image = img;
         }
 
@@ -340,18 +354,18 @@ const changeVendorPassword = async (req, res) => {
 }
 
 
-const authenticationApiVendor = (req, res) =>{
+const authenticationApiVendor = (req, res) => {
     try {
- 
-       if(req.user.role !== "vendor"){
-        return res.status(401).json({success : false, message: "Wrong user role" });
-       }
- 
-       return res.status(200).json({success : true, message: "Authentication successfully." });
+
+        if (req.user.role !== "vendor") {
+            return res.status(401).json({ success: false, message: "Wrong user role" });
+        }
+
+        return res.status(200).json({ success: true, message: "Authentication successfully." });
     } catch (error) {
-        res.status(404).json({success : false, error: error.message });
+        res.status(404).json({ success: false, error: error.message });
     }
- }
+}
 
 
-module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, changeVendorPassword,  getVendorProfile, authenticationApiVendor };
+module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, changeVendorPassword, getVendorProfile, authenticationApiVendor };

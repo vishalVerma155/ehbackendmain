@@ -6,6 +6,10 @@ const Settings = require('../../../../models/admin/settings/settings.model.js');
 const axios = require('axios');
 const UAParser = require('ua-parser-js');
 const mongoose = require('mongoose');
+const { generateTokenVersion } = require('../../../../utils/crypto.js');
+const Admin = require('../../../../models/admin/web/admin.model.js');
+
+
 
 
 
@@ -162,11 +166,19 @@ const registerAffiliateWithGoogle = async (req, res) => {
 
             const wallet = await axios.post(`https://ehbackendmain.onrender.com/wallet/createWallet/${newUser._id}`);
 
+            const rawToken = generateTokenVersion();
+            const hashedTokenVersion = await hashPassword(rawToken);
+
+
             const payload = {
                _id: newUser._id,
                email: newUser.email,
-               role: newUser.role
+               role: newUser.role,
+               tokenVersion: rawToken
             }
+
+            newUser.tokenVersion = hashedTokenVersion;
+            await newUser.save();
 
             // generate jwt token
             const accessToken = generateJWT(payload);
@@ -175,20 +187,27 @@ const registerAffiliateWithGoogle = async (req, res) => {
                httpOnly: true,
                secure: true,
                sameSite: 'LAX'
-             });
+            });
 
-            return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register."});
+            return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register." });
          }
 
-         if(isUserExisted.role !== "affiliate"){
+         if (isUserExisted.role !== "affiliate") {
             return res.status(404).json({ success: false, error: "Invalid user" });
          }
+
+         const rawToken = generateTokenVersion();
+         const hashedTokenVersion = await hashPassword(rawToken);
 
          const payload = {
             _id: isUserExisted._id,
             email: isUserExisted.email,
-            role: isUserExisted.role
+            role: isUserExisted.role,
+            tokenVersion: rawToken
          }
+
+         isUserExisted.tokenVersion = hashedTokenVersion;
+         await isUserExisted.save();
 
          // generate jwt token
          const accessToken = generateJWT(payload);
@@ -197,12 +216,12 @@ const registerAffiliateWithGoogle = async (req, res) => {
             httpOnly: true,
             secure: true,
             sameSite: 'LAX'
-          });
+         });
 
-         return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in." });
+         return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully Loged in." });
       }
 
-      return res.status(404).json({success: false, error: "Google id not found" });
+      return res.status(404).json({ success: false, error: "Google id not found" });
 
    } catch (error) {
       res.status(500).json({ success: false, error: error.message });
@@ -215,44 +234,53 @@ const loginAffiliate = async (req, res) => {
       const { userName, password } = req.body;
 
       if (!userName || userName && userName.trim() === "" || !password || password && password.trim() === "") {
-         return res.status(401).json({success: false, error: "All fields are compulsary" });
+         return res.status(401).json({ success: false, error: "All fields are compulsary" });
       }
 
       const user = await User.findOne({ $or: [{ userName }, { email: userName }] });
 
 
       if (!user) {
-         return res.status(401).json({success: false, error: "User is not existed." });
+         return res.status(401).json({ success: false, error: "User is not existed." });
       }
 
-      if(user.role !== "affiliate"){
-         return res.status(401).json({success: false, error: "Invalid user" });
+      if (user.role !== "affiliate") {
+         return res.status(401).json({ success: false, error: "Invalid user" });
       }
 
       // compare password
       const isPasswordCorrect = await comparePassword(password, user.password);
 
       if (!isPasswordCorrect) {
-         return res.status(401).json({success: false, error: "Invalid password" });
+         return res.status(401).json({ success: false, error: "Invalid password" });
       }
+
+
+      const rawToken = generateTokenVersion();
+      const hashedTokenVersion = await hashPassword(rawToken);
+
 
       const payload = {
          _id: user._id,
          email: user.email,
-         role : user.role
+         role: user.role,
+         tokenVersion: rawToken
       }
+
+      user.tokenVersion = hashedTokenVersion;
+      await user.save();
 
       // generate jwt token
       const accessToken = generateJWT(payload);
 
-      res.cookie("AccessToken", accessToken,{
+      res.cookie("AccessToken", accessToken, {
          httpOnly: true,
          secure: true,
          sameSite: 'None'
-       });
+      });
 
       // return response
-      return res.status(200).json({success: true, Message: "Affiliate has been  sucessfully Loged in." });
+      return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully Loged in." });
    } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
    }
@@ -264,19 +292,19 @@ const generateAffiliateLink = async (req, res) => {
    try {
       const afId = req.user._id;
 
-      if(!afId){
-         return res.status(400).json({success : false, error : "User is not loged in"})
+      if (!afId) {
+         return res.status(400).json({ success: false, error: "User is not loged in" })
       }
       const affiliate = await User.findById(afId);
 
-      if(!affiliate){
-         return res.status(400).json({success : false, error : "User not found"})
+      if (!affiliate) {
+         return res.status(400).json({ success: false, error: "User not found" })
       }
       const affiliateId = affiliate.userId;
-      const  productUrl = "http://localhost:5173/register"; // get website link
+      const productUrl = "http://localhost:5173/register"; // get website link
       const url = new URL(productUrl); // make new url
       url.searchParams.append("aff_id", affiliateId); // add affiliate id in url
-      return res.status(200).json({success : true, referalLink : url}); // return update link
+      return res.status(200).json({ success: true, referalLink: url }); // return update link
    } catch (error) {
       res.status(500).json({ success: false, error: error.message }); // 
    }
@@ -286,7 +314,7 @@ const generateAffiliateLink = async (req, res) => {
 const editAffiliate = async (req, res) => {
    try {
 
-      const { firstName, lastName, country, address, soloSale, clubName} = req.body;
+      const { firstName, lastName, country, address, soloSale, clubName } = req.body;
       const user = req.user._id;
       const img = req.file?.path || undefined; // get image
 
@@ -295,7 +323,7 @@ const editAffiliate = async (req, res) => {
          return res.status(500).json({ success: false, error: "Affiliate is not loged in" });
       }
 
-      if( req.user.role !== "admin" && clubName){
+      if (req.user.role !== "admin" && clubName) {
          return res.status(500).json({ success: false, error: "Sorry club will be updated according to your performance" });
       }
 
@@ -316,17 +344,17 @@ const editAffiliate = async (req, res) => {
          payload.address = address;
       }
 
-      if(img){
+      if (img) {
          payload.image = img;
-     }
+      }
 
-     if(soloSale && soloSale.trim() !== ""){
-      payload.soloSale = soloSale;
-     }
+      if (soloSale && soloSale.trim() !== "") {
+         payload.soloSale = soloSale;
+      }
 
-     if(clubName && clubName.trim() !== ""){
-      payload.clubName = clubName;
-     }
+      if (clubName && clubName.trim() !== "") {
+         payload.clubName = clubName;
+      }
 
       const updatedAffiliate = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
 
@@ -370,7 +398,7 @@ const changeAffiliatePaswword = async (req, res) => {
       const { currentPassword, newPassword } = req.body; // take details
 
       if (!currentPassword || currentPassword && currentPassword.trim() === "" || !newPassword || newPassword && newPassword.trim() === "") {
-         return res.status(401).json({success: false, error: "Please enter all fields" });
+         return res.status(401).json({ success: false, error: "Please enter all fields" });
       }
 
       const userId = req.user._id;
@@ -380,7 +408,7 @@ const changeAffiliatePaswword = async (req, res) => {
       const isPasswordCorrect = await comparePassword(currentPassword, user.password);
 
       if (!isPasswordCorrect) {
-         return res.status(401).json({success: false, error: "password is not matched" });
+         return res.status(401).json({ success: false, error: "password is not matched" });
       }
 
       const newHashedPassword = await hashPassword(newPassword); // hash new password
@@ -388,7 +416,7 @@ const changeAffiliatePaswword = async (req, res) => {
 
       await user.save(); // save user password
 
-      return res.status(200).json({success: true, Message: "Password has been chenged" });
+      return res.status(200).json({ success: true, Message: "Password has been chenged" });
    } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
    }
@@ -396,80 +424,80 @@ const changeAffiliatePaswword = async (req, res) => {
 
 const getAffiliateProfile = async (req, res) => {
    try {
-       const userId = req.user._id; // get user id
-       // console.log(req.headers["user-agent"])
-       const ua = req.headers['user-agent'];
-       const parser = new UAParser(ua);
-       const result = parser.getResult();
-       const trackedMob = {
-           browser: `${result.browser.name} - ${result.browser.version}`,
-           os: `${result.os.name} - Version: ${result.os.version}`,
-           mobileModel: result.device.model || '',
-       };
+      const userId = req.user._id; // get user id
+      // console.log(req.headers["user-agent"])
+      const ua = req.headers['user-agent'];
+      const parser = new UAParser(ua);
+      const result = parser.getResult();
+      const trackedMob = {
+         browser: `${result.browser.name} - ${result.browser.version}`,
+         os: `${result.os.name} - Version: ${result.os.version}`,
+         mobileModel: result.device.model || '',
+      };
 
-       if (!userId) {
-           return res.status(404).json({ success: false, error: "User is not loged in" });
-       }
+      if (!userId) {
+         return res.status(404).json({ success: false, error: "User is not loged in" });
+      }
 
-       const affiliateProfile = await User.findById(userId).select("-password -referrer -referredUsers "); // find and delete user
+      const affiliateProfile = await User.findById(userId).select("-password -referrer -referredUsers "); // find and delete user
 
-       return res.status(200).json({ success: true, Message: "Affiliate has been sucessfully fetched", affiliateProfile, trackedMob }); // return response
+      return res.status(200).json({ success: true, Message: "Affiliate has been sucessfully fetched", affiliateProfile, trackedMob }); // return response
    } catch (error) {
-       return res.status(500).json({ success: false, error: error.message });
+      return res.status(500).json({ success: false, error: error.message });
    }
 }
 
-const getCurrUserAffTree = async(req, res) =>{
+const getCurrUserAffTree = async (req, res) => {
    try {
       const userId = req.user._id;
 
-      if(req.user.role !== "affiliate"){
-         return res.status(404).json({success : false, error: "Invalid user for get affiliate tree" });
+      if (req.user.role !== "affiliate") {
+         return res.status(404).json({ success: false, error: "Invalid user for get affiliate tree" });
       }
 
       const affiliateTree = await User.aggregate([
-          {
-              $match: { _id: new mongoose.Types.ObjectId(userId) } // Find the root user
-          },
-          {
-              $graphLookup: {
-                  from: "users",           // Collection to search (same collection)
-                  startWith: "$_id",       // Start from the given user ID
-                  connectFromField: "_id", // The field in 'users' that should be matched
-                  connectToField: "referrer", // The field in 'users' referring to another user
-                  as: "referrals",        // Store results in 'referrals' array
-                  depthField: "depth",     // Stores the depth level of each referral
+         {
+            $match: { _id: new mongoose.Types.ObjectId(userId) } // Find the root user
+         },
+         {
+            $graphLookup: {
+               from: "users",           // Collection to search (same collection)
+               startWith: "$_id",       // Start from the given user ID
+               connectFromField: "_id", // The field in 'users' that should be matched
+               connectToField: "referrer", // The field in 'users' referring to another user
+               as: "referrals",        // Store results in 'referrals' array
+               depthField: "depth",     // Stores the depth level of each referral
 
-              }
-          },
-          {
-              $project: {
+            }
+         },
+         {
+            $project: {
+               firstName: 1,
+               lastName: 1,
+               email: 1,
+               referrals: {
+                  _id: 1,
                   firstName: 1,
                   lastName: 1,
                   email: 1,
-                  referrals: {
-                      _id: 1,
-                      firstName: 1,
-                      lastName: 1,
-                      email: 1,
-                      referrer: 1
-                  }
-              }
-          }
+                  referrer: 1
+               }
+            }
+         }
       ]);
 
 
       if (!affiliateTree.length) {
-          return res.status(404).json({success : false, error: "User not found" });
+         return res.status(404).json({ success: false, error: "User not found" });
       }
 
       // Convert the flat array into a hierarchical tree
       const structuredTree = buildAffiliateTree(affiliateTree[0]);
 
-      return res.status(200).json({success : true, message : "Affiliate tree has been successfully fetched.", structuredTree})
-  } catch (error) {
-      res.status(500).json({success : false, error: error.message });
-  }
+      return res.status(200).json({ success: true, message: "Affiliate tree has been successfully fetched.", structuredTree })
+   } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+   }
 }
 
 // Function to build a nested affiliate tree
@@ -481,51 +509,67 @@ function buildAffiliateTree(user) {
 
    // Map all referrals
    user.referrals.forEach(referral => {
-       userMap.set(referral._id.toString(), { ...referral, referrals: [] });
+      userMap.set(referral._id.toString(), { ...referral, referrals: [] });
    });
 
 
 
    // Assign each referral to its correct parent
    user.referrals.forEach(referral => {
-       if (referral.referrer) {
-           const parent = userMap.get(referral.referrer.toString());
-           if (parent) {
-               parent.referrals.push(userMap.get(referral._id.toString()));
-           }
-       }
+      if (referral.referrer) {
+         const parent = userMap.get(referral.referrer.toString());
+         if (parent) {
+            parent.referrals.push(userMap.get(referral._id.toString()));
+         }
+      }
    });
 
    // Return the root user with a nested structure
    return userMap.get(user._id.toString());
 }
 
-const logouUser = async(req, res) =>{
+const logouUser = async (req, res) => {
    try {
+
+      let user = undefined;
+
+      if (req.user.role === 'admin') {
+         const userId = req.user._id;
+         user = await Admin.findById(userId);
+      }
+
+      if (req.user.role !== 'admin') {
+         const userId = req.user._id;
+         user = await User.findById(userId);
+      }
+
+      user.tokenVersion = undefined;
+      await user.save();
+
       res.clearCookie('AccessToken', {
          httpOnly: true,
          secure: true,
          sameSite: 'None'
-       });
-       return res.status(200).json({success : true, message : "User has been successfully loged out"})
+      });
+      return res.status(200).json({ success: true, message: "User has been successfully loged out" })
    } catch (error) {
-      return res.status(500).json({success : false, error: error.message });
+      return res.status(500).json({ success: false, error: error.message });
    }
 }
 
-const authenticationApiAffiliate = (req, res) =>{
+const authenticationApiAffiliate = (req, res) => {
    try {
 
-      if(req.user.role !== "affiliate"){
-       return res.status(401).json({success : false, message: "Wrong user role" });
+      if (req.user.role !== "affiliate") {
+         return res.status(401).json({ success: false, message: "Wrong user role" });
       }
 
-      return res.status(200).json({success : true, message: "Authentication successfully." });
+      return res.status(200).json({ success: true, message: "Authentication successfully." });
    } catch (error) {
-       res.status(404).json({success : false, error: error.message });
+      res.status(404).json({ success: false, error: error.message });
    }
 }
 
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId,  getAffiliateProfile, getCurrUserAffTree, logouUser, authenticationApiAffiliate };
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId, getAffiliateProfile, getCurrUserAffTree, logouUser, authenticationApiAffiliate };

@@ -4,6 +4,7 @@ const { hashPassword, comparePassword } = require('../../../utils/bcrypt.js');
 const generateJWT = require('../../../utils/jwt.js');
 const mongoose = require('mongoose');
 const axios = require('axios');
+const { generateTokenVersion } = require('../../../utils/crypto.js')
 
 const registerAdmin = async (req, res) => {
     try {
@@ -75,18 +76,25 @@ const loginAdmin = async (req, res) => {
             return res.status(401).json({ Message: "Invalid password" });
         }
 
+        const rawToken = generateTokenVersion();
+        const hashedTokenVersion = await hashPassword(rawToken);
+
         // generate jwt token
         const accessToken = generateJWT({
             _id: user._id,
             email: user.email,
-            role: user.role
+            role: user.role,
+            tokenVersion: rawToken
         });
+
+        user.tokenVersion = hashedTokenVersion;
+        await user.save();
 
         res.cookie("AccessToken", accessToken, {
             httpOnly: true,
             secure: true,
             sameSite: 'None',
-          }); // set jwt token in cookies
+        }); // set jwt token in cookies
 
         // return response
         res.status(200).json({ success: true, Message: "Admin has been  sucessfully Loged in." });
@@ -179,7 +187,7 @@ const getAllUsersList = async (req, res) => {
 const editAnyUser = async (req, res) => {
     try {
 
-        if(req.user.role !== "admin"){
+        if (req.user.role !== "admin") {
             return res.status(404).json({ success: false, error: "Only admin can do this" })
         }
         const { firstName, lastName, email, phoneNumber, userName, groups, password, storeName, country, address, soloSale, clubName } = req.body;
@@ -205,23 +213,23 @@ const editAnyUser = async (req, res) => {
             payload.country = country;
         }
 
-        if(email && email.trim() !== ""){
+        if (email && email.trim() !== "") {
             payload.email = email;
         }
 
-        if(userName && userName.trim() !== ""){
+        if (userName && userName.trim() !== "") {
             payload.userName = userName;
         }
 
-        if(phoneNumber && phoneNumber.trim() !== ""){
+        if (phoneNumber && phoneNumber.trim() !== "") {
             payload.phoneNumber = phoneNumber;
         }
 
-        if(groups && groups.trim() !== ""){
+        if (groups && groups.trim() !== "") {
             payload.groups = groups;
         }
 
-        if(storeName && storeName.trim() !== ""){
+        if (storeName && storeName.trim() !== "") {
             payload.storeName = storeName;
         }
 
@@ -355,10 +363,10 @@ const searchUser = async (req, res) => {
 const getFullAffiliateTree = async (req, res) => {
     try {
 
-        if(req.user.role !== "admin"){
-            return res.status(400).json({success : false, error : "You are not authrized for this. Only admin can do this."})
+        if (req.user.role !== "admin") {
+            return res.status(400).json({ success: false, error: "You are not authrized for this. Only admin can do this." })
         }
-        
+
         const rootAffiliates = await User.aggregate([
             {
                 $match: {
@@ -416,7 +424,7 @@ function buildAffiliateTree(user) {
     const userMap = new Map();
 
     // Add the root user to the map
-    userMap.set(user._id.toString(), { 
+    userMap.set(user._id.toString(), {
         _id: user._id,
         userId: user.userId,
         firstName: user.firstName,
@@ -452,17 +460,17 @@ function buildAffiliateTree(user) {
 }
 
 // refresh api
-const authenticationApiAdmin = (req, res) =>{
+const authenticationApiAdmin = (req, res) => {
     try {
- 
-       if(req.user.role !== "admin"){
-        return res.status(401).json({success : false, message: "Wrong user role" });
-       }
- 
-       return res.status(200).json({success : true, message: "Authentication successfully." });
-    } catch (error) {
-        res.status(404).json({success : false, error: error.message });
-    }
- }
 
-module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, deleteAnyUser, editAnyUser, authenticationApiAdmin,getFullAffiliateTree };
+        if (req.user.role !== "admin") {
+            return res.status(401).json({ success: false, message: "Wrong user role" });
+        }
+
+        return res.status(200).json({ success: true, message: "Authentication successfully." });
+    } catch (error) {
+        res.status(404).json({ success: false, error: error.message });
+    }
+}
+
+module.exports = { registerAdmin, loginAdmin, getAllUsersList, searchUser, changeAdminPassword, deleteAnyUser, editAnyUser, authenticationApiAdmin, getFullAffiliateTree };
