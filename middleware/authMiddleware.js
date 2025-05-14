@@ -12,7 +12,7 @@ const verifyJWT = async (req, res, next) => {
     const user = jwt.verify(token, process.env.JWT_SECURITY_KEY, async (error, decoded) => {
         if (error) return res.status(401).json({ success: false, Message: "Unauthorized" });
 
-        const userToken = undefined;
+        let userToken = undefined;
 
         if (decoded.role === 'admin') {
             userToken = await Admin.findById(decoded._id).select('tokenVersion');
