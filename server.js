@@ -29,7 +29,7 @@ const saleEventRouter = require('./routes/saleEvent/saleEvent.routes.js')
 require("dotenv").config();
 const PORT = process.env.PORT || 4000;
 
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://127.0.0.1:5501', 'https://dfa2-49-43-133-246.ngrok-free.app'];
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://127.0.0.1:5501', 'https://4eca-49-43-133-246.ngrok-free.app'];
 
 // Middleware to parse JSON requests
 app.use(express.json());
