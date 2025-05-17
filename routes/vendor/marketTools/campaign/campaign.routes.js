@@ -3,6 +3,7 @@ const express = require('express');
 const verifyJWT = require('../../../../middleware/authMiddleware.js');
 const {createCampaign, editCampaign, getAllCampaignsForAdmin, getCampaign, getCampainListForVendor,getCampainListForAffiliate, deleteCampaign, tracker, urlEncode} = require('../../../../controllers/user/vendor/marketTools/campaign/campaign.controllers.js');
 const {upload} = require('../../../../utils/multer.js');
+const {createCategory, getAllCategories, deleteCategory} = require('../../../../controllers/user/vendor/marketTools/campaign/category.controllers.js')
 
 
 
@@ -39,6 +40,12 @@ router.delete("/deleteCampaign/:campaignId", verifyJWT, deleteCampaign);
 router.get("/track", tracker);
 
 router.post("/madeEncodeLink",verifyJWT, urlEncode );
+
+router.post("/createCategory", verifyJWT, createCategory);
+
+router.get("/getAllCategories", verifyJWT, getAllCategories);
+
+router.delete("/deletecategory/:categoryId", verifyJWT, deleteCategory)
 
 
 module.exports = router;
