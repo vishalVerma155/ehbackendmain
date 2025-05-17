@@ -55,8 +55,8 @@ const getUserNotifications = async (req, res) => {
             filter.recipient = userId
         }
 
-        const notifications = await Notification.find(filter)
-            .sort({ seen: -1 });
+        const notifications = await Notification.find(filter).select("message")
+            .sort({ createdAt: -1 });
 
         res.status(200).json({ success: true, message: "Notification has been fetched", notifications });
     } catch (err) {
@@ -64,46 +64,107 @@ const getUserNotifications = async (req, res) => {
     }
 };
 
-// Mark notification as seen
-const markAsSeen = async (req, res) => {
-    try {
-        const notificationId = req.params.id;
+const getNotificationById = async (req, res) => {
+  try {
+    const notificationId = req.params.notificationId;
+    const userId = req.user._id;
 
-        const updated = await Notification.findOneAndUpdate(
-            { _id: notificationId, recipient: userId },
-            { seen: true },
-            { new: true }
-        );
+    // Role-based filter
+    const filter = { _id: notificationId };
 
-        if (!updated) {
-            return res.status(404).json({ success: false, error: 'Notification not found' });
-        }
-
-       return res.status(200).json({ success: true, message: "Notification has been seen" });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to mark as seen' });
+    if (req.user.role === 'admin') {
+      filter.recipientAdmin = userId;
+    } else {
+      filter.recipient = userId;
     }
+
+    const notification = await Notification.findOne(filter);
+
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+
+    res.status(200).json({ success: true, message: 'Notification fetched successfully', notification });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 };
 
-// Mark all notifications as seen
-const markAllAsSeen = async (req, res) => {
+const deleteNotification = async (req, res) => {
     try {
+        const notificationId = req.params.notificationId;
         const userId = req.user._id;
 
-        await Notification.updateMany({ recipient: userId, seen: false }, { seen: true });
+        if (!notificationId || !userId) {
+            res.status(404).json({ success: false, error: "Notification and user id is required." });
+        }
 
-        res.json({ message: 'All notifications marked as seen' });
+        const filter = {}
+
+        filter._id = notificationId;
+
+        if (req.user.role === "admin") {
+            filter.recipientAdmin = userId;
+        }
+
+        if (req.user.role !== "admin") {
+            filter.recipient = userId;
+        }
+
+        const deleted = await Notification.findOneAndDelete(filter);
+
+        if (!deleted) {
+            return res.status(404).json({ success: false, error: 'Notification not found or unauthorized' });
+        }
+
+        res.status(200).json({ success: true, message: 'Notification deleted successfully' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Failed to mark notifications as seen' });
+        res.status(500).json({ success: false, error: 'Failed to delete notification' });
     }
 };
+
+
+// // Mark notification as seen
+// const markAsSeen = async (req, res) => {
+//     try {
+//         const notificationId = req.params.id;
+
+//         const updated = await Notification.findOneAndUpdate(
+//             { _id: notificationId},
+//             { seen: true },
+//             { new: true }
+//         );
+
+//         if (!updated) {
+//             return res.status(404).json({ success: false, error: 'Notification not found' });
+//         }
+
+//        return res.status(200).json({ success: true, message: "Notification has been seen" });
+
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: 'Failed to mark as seen' });
+//     }
+// };
+
+// Mark all notifications as seen
+// const markAllAsSeen = async (req, res) => {
+//     try {
+//         const userId = req.user._id;
+
+//         await Notification.updateMany({ recipient: userId, seen: false }, { seen: true });
+
+//         res.json({ message: 'All notifications marked as seen' });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: 'Failed to mark notifications as seen' });
+//     }
+// };
 
 module.exports = {
     createNotification,
     getUserNotifications,
-    markAsSeen,
-    markAllAsSeen,
+    deleteNotification,
+    getNotificationById
 };
