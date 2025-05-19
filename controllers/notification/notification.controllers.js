@@ -55,7 +55,7 @@ const getUserNotifications = async (req, res) => {
             filter.recipient = userId
         }
 
-        const notifications = await Notification.find(filter).select("message")
+        const notifications = await Notification.find(filter).select("message createdAt")
             .sort({ createdAt: -1 });
 
         res.status(200).json({ success: true, message: "Notification has been fetched", notifications });
