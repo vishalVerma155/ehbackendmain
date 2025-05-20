@@ -1,16 +1,30 @@
 const MarketingProgram = require('../../../../../models/user/vendor/marketTools/programs/program.model.js');
 const MLMCommission = require('../../../../../models/user/vendor/MLM/mlmProgram.model.js');
 const User = require('../../../../../models/user/web/user.model.js');
+const Admin = require('../../../../../models/admin/web/admin.model.js') 
 
 const createMarketingProgram = async (req, res) => {
 
     try {
+
+        if (req.user.role !== "vendor" && req.user.role !== "admin") {
+            return res.status(404).json({ success: false, error: "You are not authorized." });
+        }
+
         const data = req.body;
         const { programName } = req.body;
-        const userId = req.user._id;
+        let userId = undefined;
+        let adminId = undefined;
 
+        if (req.user.role === 'vendor') {
+            userId = req.user._id;
+        }
 
-        if (!userId) {
+        if (req.user.role === 'admin') {
+            adminId = req.user._id;
+        }
+
+        if (!userId && !adminId) {
             return res.status(404).json({ success: false, error: "user id not found" });
         }
 
@@ -20,6 +34,7 @@ const createMarketingProgram = async (req, res) => {
 
         const makertingProgram = new MarketingProgram({
             userId,
+            adminId,
             ...data
         });
 
@@ -82,12 +97,13 @@ const getAllMarketingProgramForAdmin = async (req, res) => {
             payload.programName = programName;
         }
 
-        if(status && status.trim() !== ""){
+        if (status && status.trim() !== "") {
             payload.status = status;
         }
 
         const programs = await MarketingProgram.find(payload)
             .populate("userId", "firstName userId")
+            .populate("adminId", "fullName role")
             .populate("mlm", "totalMLMLevel totalCommission adminCommission commissions")
             .lean();
 
@@ -106,18 +122,18 @@ const getAllMarketingProgramForVendor = async (req, res) => {
 
         const payload = {};
         payload.userId = userId;
-        
+
         if (programName && programName.trim() !== "") {
             payload.programName = programName;
         }
 
-        if(status && status.trim() !== ""){
+        if (status && status.trim() !== "") {
             payload.status = status;
         }
 
 
         const programs = await MarketingProgram.find(payload).lean();
-      
+
 
         return res.status(200).json({ success: true, programs });
     } catch (error) {

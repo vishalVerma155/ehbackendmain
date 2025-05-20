@@ -9,7 +9,10 @@ const marketingProgramSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user", // Reference to user model
-        required: true
+    },
+    adminId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "admin", // Reference to user model
     },
     commissionType: {
         type: String,
