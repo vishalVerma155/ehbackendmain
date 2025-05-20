@@ -112,6 +112,10 @@ const editCampaign = async (req, res) => {
         const img = req.files['campaignImage'] ? req.files['campaignImage'][0].path : undefined;
         const bannerImage = req.files['bannerImage'] ? req.files['bannerImage'][0].path : undefined;
 
+        console.log("img : ", img);
+        console.log("banner : ", bannerImage);
+
+
         if (!campaignId) {
             return res.status(404).json({ success: false, error: "campaign Id not found" });
         }
@@ -119,7 +123,7 @@ const editCampaign = async (req, res) => {
         const fileds = {...data};
 
         if(img){
-            fileds.campaignImage = img;
+            fileds.image = img;
         }
 
         if(bannerImage){
