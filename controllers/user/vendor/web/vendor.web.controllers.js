@@ -194,17 +194,18 @@ const loginVendor = async (req, res) => {
         }
 
         // compare password
-        const rawToken = generateTokenVersion();
-        const hashedTokenVersion = await hashPassword(rawToken);
         const isPasswordCorrect = await comparePassword(password, user.password);
-
-
-        user.tokenVersion = hashedTokenVersion;
-        await user.save();
 
         if (!isPasswordCorrect) {
             return res.status(401).json({ success: false, error: "Invalid password" });
         }
+
+        const rawToken = generateTokenVersion();
+        const hashedTokenVersion = await hashPassword(rawToken);
+
+        user.tokenVersion = hashedTokenVersion;
+        await user.save();
+
 
         const payload = {
             _id: user._id,
