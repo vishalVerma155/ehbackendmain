@@ -2,6 +2,11 @@ const express = require('express');
 const app = express();
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const http = require('http');
+const { initSocket } = require('./socket');
+
+const server = http.createServer(app);
+initSocket(server);
 
 const affiliateRouter = require('./routes/affiliate/web/affiliate.web.routes.js');
 const adminRouter = require('./routes/admin/admin.routes.js');
@@ -78,7 +83,7 @@ app.use("/notification", notificationRouter);
 
 
 // Start the server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server Started at ${PORT}`);
     dbconnect(); // call database
 });

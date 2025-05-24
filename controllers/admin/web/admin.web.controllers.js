@@ -13,7 +13,7 @@ const registerAdmin = async (req, res) => {
 
         const isAdminExisted = await Admin.find();
 
-        if (isAdminExisted.length >= 1) {
+        if (isAdminExisted.length > 1) {
             return res.status(401).json({ Message: "Admin is already existed. There can be only one admin" })
         }
 

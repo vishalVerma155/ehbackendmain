@@ -17,13 +17,13 @@ const notificationSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'admin',
     },
-    message: {
+    heading: {
         type: String,
         required: true
     },
-    seen: {
-        type: Boolean,
-        default: false
+    message: {
+        type: String,
+        required: true
     }
 },{timestamps : true});
 

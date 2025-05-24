@@ -8,6 +8,8 @@ const UAParser = require('ua-parser-js');
 const mongoose = require('mongoose');
 const { generateTokenVersion } = require('../../../../utils/crypto.js');
 const Admin = require('../../../../models/admin/web/admin.model.js');
+const { getIO } = require('../../../../socket/index.js')
+
 
 
 
@@ -95,6 +97,11 @@ const registerAffiliate = async (req, res) => {
       }
 
       const wallet = await axios.post(`https://ehbackendmain.onrender.com/wallet/createWallet/${newUser._id}`);
+
+      const io = getIO();
+      io.to("admin").emit("notification", {
+         message: ` New ${newUser.role} registered: ${newUser.firstName}`,
+      });
 
       // return response
       res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register.", });
@@ -186,7 +193,12 @@ const registerAffiliateWithGoogle = async (req, res) => {
             res.cookie("AccessToken", accessToken, {
                httpOnly: true,
                secure: true,
-               sameSite: 'LAX'
+               sameSite: 'None'
+            });
+
+            const io = getIO();
+            io.to("admin").emit("notification", {
+               message: ` New user ${isUserExisted.firstName} has been registed as ${isUserExisted.role} `,
             });
 
             return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register." });
@@ -215,8 +227,10 @@ const registerAffiliateWithGoogle = async (req, res) => {
          res.cookie("AccessToken", accessToken, {
             httpOnly: true,
             secure: true,
-            sameSite: 'LAX'
+            sameSite: 'None'
          });
+
+
 
          return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully Loged in." });
       }
