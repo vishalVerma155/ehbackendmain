@@ -234,16 +234,14 @@ const editWithdrawalRequest = async (req, res) => {
             await session.commitTransaction();
             session.endSession();
 
-            const admin = await Admin.findOne({ role: "admin" })
-
             const notification = await axios.post(
                 "https://ehbackendmain.onrender.com/notification/createNotification",
                 {
                     recipient: withdReq.userId,
                     heading: `Your withdraw request has been approved.`,
                     message: `Your withdraw request has been accepted  amount of ${withdReq.amount} rupess from wallet`,
-                    sender: admin._id,
-                    senderRole: admin.role,
+                    sender: req.user._id,
+                    senderRole: req.user.role,
                     receiverRole: withdReq.userId.role
                 }
             );
