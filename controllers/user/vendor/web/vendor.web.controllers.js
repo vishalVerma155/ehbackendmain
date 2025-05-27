@@ -5,6 +5,7 @@ const { comparePassword, hashPassword } = require('../../../../utils/bcrypt.js')
 const axios = require("axios");
 const UAParser = require('ua-parser-js');
 const { generateTokenVersion } = require('../../../../utils/crypto.js');
+const Admin = require('../../../../models/admin/web/admin.model.js')
 
 // register vendor with email id and password
 const registerVendor = async (req, res) => {
@@ -63,6 +64,19 @@ const registerVendor = async (req, res) => {
         // create wallet
         const wallet = await axios.post(`https://ehbackendmain.onrender.com/wallet/createWallet/${newUser._id}`);
 
+        const admin = await Admin.findOne({ role: "admin" });
+
+        const notification = await axios.post(
+            "https://ehbackendmain.onrender.com/notification/createNotification",
+            {
+                recipient: admin._id,
+                heading: `New user registered in ${newUser.role} panel.`,
+                message: `${newUser.firstName} has been registered in ${newUser.role}`,
+                sender: newUser._id,
+                senderRole: newUser.role,
+                receiverRole: admin.role
+            }
+        );
         // return response
         res.status(200).json({ success: true, Message: "Vendor has been  sucessfully register." });
     } catch (error) {
@@ -132,6 +146,20 @@ const registerVendorWithGoogle = async (req, res) => {
                     secure: true,
                     sameSite: 'LAX'
                 });
+
+                const admin = await Admin.findOne({ role: "admin" });
+
+                const notification = await axios.post(
+                    "https://ehbackendmain.onrender.com/notification/createNotification",
+                    {
+                        recipient: admin._id,
+                        heading: `New user registered in ${newUser.role} panel.`,
+                        message: `${newUser.firstName} has been registered in ${newUser.role}`,
+                        sender: newUser._id,
+                        senderRole: newUser.role,
+                        receiverRole: admin.role
+                    }
+                );
 
                 return res.status(200).json({ success: true, Message: "Vendor has been sucessfully register." });
             }

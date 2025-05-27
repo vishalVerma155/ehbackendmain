@@ -8,10 +8,7 @@ const UAParser = require('ua-parser-js');
 const mongoose = require('mongoose');
 const { generateTokenVersion } = require('../../../../utils/crypto.js');
 const Admin = require('../../../../models/admin/web/admin.model.js');
-const {getIO} = require('../../../../socket/index.js')
-
-
-
+const { getIO } = require('../../../../socket/index.js')
 
 
 
@@ -105,10 +102,11 @@ const registerAffiliate = async (req, res) => {
          "https://ehbackendmain.onrender.com/notification/createNotification",
          {
             recipient: admin._id,
-            heading: `New user registered`,
+            heading: `New user registered in Affiliate panel.`,
             message: `${newUser.firstName} has been registered in ${newUser.role}`,
             sender: newUser._id,
-            senderRole: newUser.role
+            senderRole: newUser.role,
+            receiverRole: admin.role
          }
       );
 
@@ -205,10 +203,19 @@ const registerAffiliateWithGoogle = async (req, res) => {
                sameSite: 'None'
             });
 
-            const io = getIO();
-            io.to("admin").emit("notification", {
-               message: ` New user ${isUserExisted.firstName} has been registed as ${isUserExisted.role} `,
-            });
+            const admin = await Admin.findOne({ role: "admin" });
+
+            const notification = await axios.post(
+               "https://ehbackendmain.onrender.com/notification/createNotification",
+               {
+                  recipient: admin._id,
+                  heading: `New user registered in Affiliate panel.`,
+                  message: `${newUser.firstName} has been registered in ${newUser.role}`,
+                  sender: newUser._id,
+                  senderRole: newUser.role,
+                  receiverRole: admin.role
+               }
+            );
 
             return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully register." });
          }
