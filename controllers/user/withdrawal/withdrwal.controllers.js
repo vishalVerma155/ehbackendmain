@@ -5,6 +5,9 @@ const UpiId = require("../../../models/user/bankDetails/bankDetails.model.js");
 const Wallet = require("../../../models/wallet/wallet.model.js");
 const WalletTransaction = require("../../../models/wallet/walletTranstions.model.js");
 const mongoose = require('mongoose');
+const axios = require('axios');
+const Admin = require('../../../models/admin/web/admin.model.js');
+
 
 const createWithdrawalRequest = async (req, res) => {
     try {
@@ -43,6 +46,27 @@ const createWithdrawalRequest = async (req, res) => {
 
         await withdrawalRequest.save();
 
+        const withdraw = await Withdrawal.findById(withdrawalRequest._id).populate("userId", "firstName role");
+
+
+        if (!withdraw) {
+            return res.status(404).json({ success: false, error: "Withdrawal request not found." });
+        }
+
+        const admin = await Admin.findOne({ role: "admin" });
+
+        const notification = await axios.post(
+            "https://ehbackendmain.onrender.com/notification/createNotification",
+            {
+                recipient: admin._id,
+                heading: `${withdraw.userId.firstName} ${withdraw.userId.role} has requested to withdrawal amount.`,
+                message: `${withdraw.userId.firstName} ${withdraw.userId.role} has requested to withdrawal amount. of ${withdraw.amount} rupess from wallet`,
+                sender: withdraw.userId._id,
+                senderRole: withdraw.userId.role,
+                receiverRole: admin.role
+            }
+        );
+
         return res.status(200).json({ success: true, message: "Your withdrawal request has been submitted.", withdrawalRequest });
 
     } catch (error) {
@@ -70,19 +94,19 @@ const getAllWithdrawalRequest = async (req, res) => {
         // Filter by date range
         if (startDate || endDate) {
             filter.createdAt = {};
-          
+
             if (startDate) {
-              filter.createdAt.$gte = new Date(`${startDate}T00:00:00.000Z`);
+                filter.createdAt.$gte = new Date(`${startDate}T00:00:00.000Z`);
             }
             // console.log("hurr", filter)
 
-          
+
             if (endDate) {
-              filter.createdAt.$lte = new Date(`${endDate}T23:59:59.999Z`);
+                filter.createdAt.$lte = new Date(`${endDate}T23:59:59.999Z`);
             }
-          }
-          
-          
+        }
+
+
 
         // Filter by payment method
         if (paymentMethod === 'bank') {
@@ -124,15 +148,15 @@ const getAllWithdrawalRequestUser = async (req, res) => {
         // Filter by date range
         if (startDate || endDate) {
             filter.createdAt = {};
-          
+
             if (startDate) {
-              filter.createdAt.$gte = new Date(`${startDate}T00:00:00.000Z`);
+                filter.createdAt.$gte = new Date(`${startDate}T00:00:00.000Z`);
             }
-          
+
             if (endDate) {
-              filter.createdAt.$lte = new Date(`${endDate}T23:59:59.999Z`);
+                filter.createdAt.$lte = new Date(`${endDate}T23:59:59.999Z`);
             }
-          }
+        }
 
         // Filter by payment method
         if (paymentMethod === 'bank') {
@@ -168,7 +192,7 @@ const editWithdrawalRequest = async (req, res) => {
 
         const { withdrawalReqId, status, transactionId } = req.body;
 
-        const withdReq = await Withdrawal.findById(withdrawalReqId).session(session);
+        const withdReq = await Withdrawal.findById(withdrawalReqId).populate("userId", "role").session(session);
 
         if (!withdReq) {
             await session.abortTransaction();
@@ -187,12 +211,12 @@ const editWithdrawalRequest = async (req, res) => {
 
         if (withdReq.status === "paid") {
 
-            const wallet = await Wallet.findOne({ userId: withdReq.userId }).session(session);
+            const wallet = await Wallet.findOne({ userId: withdReq.userId._id }).session(session);
             const amountWithdrawal = withdReq.amount;
             const paymentStatus = withdReq.status;
 
             const payload = {
-                userId: withdReq.userId,
+                userId: withdReq.userId._id,
                 transactionId,
                 type: "withdrawal",
                 amount: amountWithdrawal,
@@ -209,6 +233,20 @@ const editWithdrawalRequest = async (req, res) => {
 
             await session.commitTransaction();
             session.endSession();
+
+            const admin = await Admin.findOne({ role: "admin" })
+
+            const notification = await axios.post(
+                "https://ehbackendmain.onrender.com/notification/createNotification",
+                {
+                    recipient: withdReq.userId,
+                    heading: `Your withdraw request has been approved.`,
+                    message: `Your withdraw request has been accepted  amount of ${withdReq.amount} rupess from wallet`,
+                    sender: admin._id,
+                    senderRole: admin.role,
+                    receiverRole: withdReq.userId.role
+                }
+            );
 
             return res.status(200).json({ success: true, walletTransaction, message: "Your withdrawal request has been completed. Amount has been deducted." });
         }
