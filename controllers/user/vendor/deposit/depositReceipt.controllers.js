@@ -4,6 +4,9 @@ const BankDetail = require('../../../../models/user/bankDetails/bankDetails.mode
 const UpiId = require('../../../../models/user/bankDetails/upi.model.js');
 const WalletTransaction = require("../../../../models/wallet/walletTranstions.model.js");
 const mongoose = require('mongoose');
+const axios = require('axios');
+const Admin = require('../../../../models/admin/web/admin.model.js');
+
 
 
 const createDepositReceipt = async (req, res) => {
@@ -97,6 +100,24 @@ const createDepositReceipt = async (req, res) => {
             .populate("bankDetails", "accountName accountNumber bankName IFSCCode")
             .lean();
 
+        const admin = await Admin.findOne({ role: 'admin' });
+
+        const notification = await axios.post(
+            "https://ehbackendmain.onrender.com/notification/createNotification",
+            {
+                recipient: admin._id,
+                heading: `${populatedDepositReceipt.userId.firstName} ${populatedDepositReceipt.userId.lastName} ${populatedDepositReceipt.userId.role} has been deposited ${populatedDepositReceipt.
+                    amountDeposited} in wallet`,
+                message: `${populatedDepositReceipt.userId.firstName} ${populatedDepositReceipt.userId.lastName} ${populatedDepositReceipt.userId.role} has been deposited ${populatedDepositReceipt.
+                    amountDeposited} in wallet through ${populatedDepositReceipt.bankDetails ? "Bank Account" : "UPI"}`,
+                sender: populatedDepositReceipt.userId._id,
+                senderRole: populatedDepositReceipt.userId.role,
+                receiverRole: admin.role
+            }
+        );
+
+
+
         return res.status(200).json({
             success: true,
             populatedDepositReceipt,
@@ -186,7 +207,7 @@ const createDepositReceipt = async (req, res) => {
 //             .populate("upiDetails", "upiId")
 //             .populate("bankDetails", "accountName accountNumber bankName IFSCCode")
 //             .lean();
-        
+
 //         return res.status(200).json({ success: true, populatedDepositReceipt, message : `${amountDeposited} has been deposited in your walllet.` });
 
 //     } catch (error) {

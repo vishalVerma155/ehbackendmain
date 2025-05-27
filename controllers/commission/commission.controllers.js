@@ -84,6 +84,19 @@ const createCommission = async (req, res) => {
                 .populate("giverId", "firstName lastName email userId role")
                 .populate("getterAdmin", "fullName email userId role")
                 .lean(); // Convert Mongoose document to plain object for better performance
+
+            const notification = await axios.post(
+                "https://ehbackendmain.onrender.com/notification/createNotification",
+                {
+                    recipient: populatedCommissionReceipt.getterAdmin._id,
+                    heading: `${populatedCommissionReceipt.giverId.firstName} ${populatedCommissionReceipt.giverId.lastName} ${populatedCommissionReceipt.giverId.role} has been generated a commission pay receipt.`,
+                    message: `${populatedCommissionReceipt.giverId.firstName} ${populatedCommissionReceipt.giverId.lastName} ${populatedCommissionReceipt.giverId.role} has been generated a commission pay receipt of ${populatedCommissionReceipt.commission} rupess with commssion percentage ${populatedCommissionReceipt.commissionPercentage} on total sale of ${populatedCommissionReceipt.totalSaleAmount}`,
+                    sender: populatedCommissionReceipt.giverId._id,
+                    senderRole: populatedCommissionReceipt.giverId.role,
+                    receiverRole: populatedCommissionReceipt.getterAdmin.role
+                }
+            );
+
         }
 
         if (giverType === "admin") {
@@ -91,6 +104,20 @@ const createCommission = async (req, res) => {
                 .populate("getterId", "firstName lastName email userId role")
                 .populate("giverAdmin", "fullName email userId role")
                 .lean(); // Convert Mongoose document to plain object for better performance
+
+
+            const notification = await axios.post(
+                "https://ehbackendmain.onrender.com/notification/createNotification",
+                {
+                    recipient: populatedCommissionReceipt.getterId._id,
+                    heading: `${populatedCommissionReceipt.giverAdmin.role} has been generated a commission pay receipt.`,
+                    message: `${populatedCommissionReceipt.giverAdmin.role} has been generated a commission pay receipt of ${populatedCommissionReceipt.commission} rupess with commssion percentage ${populatedCommissionReceipt.commissionPercentage} on total sale of ${populatedCommissionReceipt.totalSaleAmount}`,
+                    sender: populatedCommissionReceipt.giverAdmin._id,
+                    senderRole: populatedCommissionReceipt.giverAdmin.role,
+                    receiverRole: populatedCommissionReceipt.getterId.role
+                }
+            );
+
         }
 
         return res.status(200).json({ success: true, populatedCommissionReceipt });
@@ -216,11 +243,11 @@ const editCommission = async (req, res) => {
 //             return res.status(404).json({ success: false, error: "Commission id not found" });
 //         }
 
-        
+
 //         if (!paymentStatus && !finalStatus) {
 //             return res.status(404).json({ success: false, error: "One field is compulsary" });
 //         }
-        
+
 //         const commission = await Commission.findById(commId);
 
 //         if(commission.paymentStatus === "paid"){
@@ -314,7 +341,7 @@ const getCommissionGiverWise = async (req, res) => {
 
         if (role === "admin") {
 
-            payload.giverAdmin = giverId ;
+            payload.giverAdmin = giverId;
             const giverCommission = await Commission.find(payload)
                 .populate("getterId", "firstName lastName email userId role")
                 .populate("giverAdmin", "fullName email userId role")
@@ -325,7 +352,7 @@ const getCommissionGiverWise = async (req, res) => {
         }
 
         payload.giverId = giverId;
-         const giverCommission = await Commission.find(payload)
+        const giverCommission = await Commission.find(payload)
             .populate("giverId", "firstName lastName email userId role")
             .populate("getterAdmin", "fullName email userId role")
             .lean();
@@ -425,7 +452,7 @@ const commissionFilterApi = async (req, res) => {
         if (startDate) {
             startDate = new Date(`${startDate}T00:00:00.000Z`);
             endDate = new Date(`${endDate}T23:59:59.999Z`);
-            
+
 
             if (isNaN(startDate) || isNaN(endDate)) {
                 return res.status(400).json({ success: false, message: "Invalid date format" });

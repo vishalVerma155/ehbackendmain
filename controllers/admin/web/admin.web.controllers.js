@@ -4,7 +4,8 @@ const { hashPassword, comparePassword } = require('../../../utils/bcrypt.js');
 const generateJWT = require('../../../utils/jwt.js');
 const mongoose = require('mongoose');
 const axios = require('axios');
-const { generateTokenVersion } = require('../../../utils/crypto.js')
+const { generateTokenVersion } = require('../../../utils/crypto.js');
+
 
 const registerAdmin = async (req, res) => {
     try {

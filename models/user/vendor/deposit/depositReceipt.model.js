@@ -18,7 +18,7 @@ const paymentDepositReceiptSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ["processed", "successful", "failed"],
+      enum: ["processed", "paid", "failed"],
       default: "processed",
     },
     bankDetails: {
