@@ -5,10 +5,11 @@ const { getIO } = require('../../socket/index.js')
 // Create and send a notification
 const createNotification = async (req, res) => {
     try {
-        const { recipient, message, sender, senderRole, heading } = req.body;
+        const { recipient, message, sender, senderRole, heading, receiverRole } = req.body;
+        const io = getIO();
 
-        if (!recipient || recipient && recipient.trim() === "" || !sender || sender && sender.trim() === "" || !senderRole || senderRole && senderRole.trim() === "") {
-            return res.status(400).json({ success: false, error: "Receipt, sender, senderRole is compulsary" });
+        if (!recipient || recipient && recipient.trim() === "" || !sender || sender && sender.trim() === "" || !senderRole || senderRole && senderRole.trim() === "" || !receiverRole || receiverRole && receiverRole.trim() === "") {
+            return res.status(400).json({ success: false, error: "Receipt, sender, senderRole, receiverRole are compulsary" });
         }
 
         let notification = undefined;
@@ -20,7 +21,11 @@ const createNotification = async (req, res) => {
                 senderAdmin: sender
             });
             await notification.save();
-            return res.status(201).json({ success: true, message: "Notification has been sent", notification });
+
+            io.to(`${receiverRole}:${recipient}`).emit("notification", {
+                message: notification.heading,
+            });
+            return res.status(201).json({ success: true, message: "Notification has been sent" });
         }
 
         notification = new Notification({
@@ -31,17 +36,11 @@ const createNotification = async (req, res) => {
         });
         await notification.save();
 
-        const io = getIO();
-        io.to("admin").emit("notification", {
-            message: ` New ${newUser.role} registered: ${newUser.firstName}`,
+        io.to(`${receiverRole}:${recipient}`).emit("notification", {
+            message: notification.heading,
         });
-        // Optionally: emit notification to recipient via Socket.IO (if online)
-        // const io = req.app.get('io');
-        // if (io && recipient) {
-        //   io.to(recipient.toString()).emit('new_notification', notification);
-        // }
 
-        return res.status(201).json({ success: true, message: "Notification has been created", notification });
+        return res.status(201).json({ success: true, message: "Notification has been created"});
 
     } catch (err) {
         return res.status(500).json({ success: false, error: 'Failed to create notification' });
