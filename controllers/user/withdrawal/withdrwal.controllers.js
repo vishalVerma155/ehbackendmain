@@ -210,11 +210,11 @@ const editWithdrawalRequest = async (req, res) => {
         await withdReq.save({ session });
 
         if (withdReq.status === "paid") {
-
+          
             const wallet = await Wallet.findOne({ userId: withdReq.userId._id }).session(session);
             const amountWithdrawal = withdReq.amount;
             const paymentStatus = withdReq.status;
-
+            
             const payload = {
                 userId: withdReq.userId._id,
                 transactionId,
@@ -224,20 +224,18 @@ const editWithdrawalRequest = async (req, res) => {
                 status: paymentStatus,
                 details: { withdrawalRequest: withdReq._id },
             };
-
+            
             wallet.balance -= Number(amountWithdrawal);
             await wallet.save({ session });
-
+            
             const walletTransaction = new WalletTransaction(payload);
             await walletTransaction.save({ session });
 
-            await session.commitTransaction();
-            session.endSession();
 
             const notification = await axios.post(
                 "https://ehbackendmain.onrender.com/notification/createNotification",
                 {
-                    recipient: withdReq.userId,
+                    recipient: withdReq.userId._id,
                     heading: `Your withdraw request has been approved.`,
                     message: `Your withdraw request has been accepted  amount of ${withdReq.amount} rupess from wallet`,
                     sender: req.user._id,
@@ -245,6 +243,10 @@ const editWithdrawalRequest = async (req, res) => {
                     receiverRole: withdReq.userId.role
                 }
             );
+
+            await session.commitTransaction();
+            session.endSession();
+
 
             return res.status(200).json({ success: true, walletTransaction, message: "Your withdrawal request has been completed. Amount has been deducted." });
         }
@@ -260,67 +262,6 @@ const editWithdrawalRequest = async (req, res) => {
         return res.status(500).json({ success: false, error: error.message });
     }
 };
-
-
-// const editWithdrawalRequest = async (req, res) => {
-//     try {
-//         const role = req.user.role;
-
-//         if (role !== "admin") {
-//             return res.status(404).json({ success: false, error: "Only admin can do this" });
-//         }
-
-//         const { withdrawalReqId, status, transactionId } = req.body;
-
-//         const withdReq = await Withdrawal.findById(withdrawalReqId);
-
-//         if (!withdReq) {
-//             return res.status(404).json({ success: false, error: "Withdrawal request not found" });
-//         }
-
-//         if(withdReq.status === "paid"){
-//             return res.status(404).json({ success: false, error: "Withdrawal request is already accepted." });
-//         }
-
-//         withdReq.status = status;
-//         await withdReq.save();
-
-//         if (withdReq.status === "paid") {
-
-//             const wallet = await Wallet.findOne({ userId : withdReq.userId });
-//             const amountWithdrawal = withdReq.amount;
-//             const paymentStatus = withdReq.status;
-
-//             const payload = {
-//                 transactionId: transactionId,
-//                 type: "withdrawal",
-//                 amount: amountWithdrawal,
-//                 drCr: "DR",
-//                 status: paymentStatus,
-//                 details: { withdrawalRequest: withdReq._id },
-//             }
-
-//             wallet.balance -= Number(amountWithdrawal);
-//             await wallet.save();
-
-//             const walletTracnstion = new WalletTransaction(payload);
-//             await walletTracnstion.save()
-
-//             let populatedWithdrawalReceipt = await Withdrawal.findById(withdReq._id)
-//                 .populate("userId", "firstName userId email")
-//                 .populate("bankDetails", "accountName accountNumber IFSCCode bankName")
-//                 .populate("upi", "upiId");
-
-//             return res.status(200).json({ success: true, populatedWithdrawalReceipt, message: "Your withdrawal request has been completed. Amount has been added in your given payment method" });
-//         }
-
-
-//         return res.status(200).json({ success: true, withdReq, message: "Withdrawal status is not changed" })
-
-//     } catch (error) {
-//         return res.status(500).json({ success: false, error: error.message });
-//     }
-// }
 
 
 module.exports = { createWithdrawalRequest, getAllWithdrawalRequest, getAllWithdrawalRequestUser, editWithdrawalRequest };
