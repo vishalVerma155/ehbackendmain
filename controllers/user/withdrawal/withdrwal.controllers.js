@@ -210,11 +210,18 @@ const editWithdrawalRequest = async (req, res) => {
         await withdReq.save({ session });
 
         if (withdReq.status === "paid") {
-          
+
             const wallet = await Wallet.findOne({ userId: withdReq.userId._id }).session(session);
+
+            if (!wallet) {
+                await session.abortTransaction();
+                session.endSession();
+                return res.status(404).json({ success: false, error: "Wallet not found for user" });
+            }
+            
             const amountWithdrawal = withdReq.amount;
             const paymentStatus = withdReq.status;
-            
+
             const payload = {
                 userId: withdReq.userId._id,
                 transactionId,
@@ -224,10 +231,10 @@ const editWithdrawalRequest = async (req, res) => {
                 status: paymentStatus,
                 details: { withdrawalRequest: withdReq._id },
             };
-            
+
             wallet.balance -= Number(amountWithdrawal);
             await wallet.save({ session });
-            
+
             const walletTransaction = new WalletTransaction(payload);
             await walletTransaction.save({ session });
 
