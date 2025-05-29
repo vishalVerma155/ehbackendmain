@@ -11,10 +11,8 @@ const transporter = nodemailer.createTransport({
 
 const sendOTPEmail = async (to, otp) => {
 
-    console.log("Enter")
-
-  const respo =  await transporter.verify();
-    console.log("Server is ready to take our messages", respo);
+    const respo = await transporter.verify();
+    console.log("Server is ready to take our messages");
 
     const res = await transporter.sendMail({
         from: process.env.EMAIL_USER,
