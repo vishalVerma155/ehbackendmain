@@ -8,7 +8,9 @@ const UAParser = require('ua-parser-js');
 const mongoose = require('mongoose');
 const { generateTokenVersion } = require('../../../../utils/crypto.js');
 const Admin = require('../../../../models/admin/web/admin.model.js');
-const { getIO } = require('../../../../socket/index.js')
+const { getIO } = require('../../../../socket/index.js');
+const generateOTP = require('../../../../utils/otpGenerater.js');
+const { sendOTPEmail } = require('../../../../utils/emailServices.js')
 
 
 
@@ -428,6 +430,69 @@ const getUserByUserId = async (req, res) => {
    }
 }
 
+
+// Request OTP
+const forgotPassword = async (req, res) => {
+
+   try {
+      const { email } = req.body;
+
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+      const otp = generateOTP();
+      const hashedOTP =await hashPassword(otp);
+
+      user.otp = hashedOTP;
+      user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+      await user.save();
+
+      await sendOTPEmail(email, otp);
+      res.status(200).json({ success: true, message: 'OTP sent to email' });
+
+   } catch (error) {
+      res.status(500).json({ success: false, message: 'Error sending email', error: error.message });
+   }
+};
+
+// Verify OTP and Reset Password
+const resetPassword = async (req, res) => {
+   try {
+      const { email, otp, newPassword } = req.body;
+
+      const user = await User.findOne({ email });
+      if (!user) {
+         return res.status(400).json({ success: false, error: 'User not found' });
+      }
+
+
+      if (user.otpExpires < Date.now()) {
+         return res.status(400).json({ message: 'OTP has expired' });
+      }
+
+      const isOTPCorrect = await comparePassword(otp, user.otp);
+
+      if(!isOTPCorrect){
+         return res.status(400).json({ success: false, error: 'Invalid OTP' });
+      }
+
+
+      const hashedPassword = await hashPassword(newPassword);
+      user.password = hashedPassword;
+      user.otp = undefined;
+      user.otpExpires = undefined;
+
+      await user.save();
+
+      res.status(200).json({ success: true, message: 'Password reset successful' });
+   } catch (error) {
+      res.status(500).json({ success: false, message: 'Error sending email', error: error.message });
+   }
+};
+
+
+
 // change affiliate password
 
 const changeAffiliatePaswword = async (req, res) => {
@@ -609,4 +674,4 @@ const authenticationApiAffiliate = (req, res) => {
 
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId, getAffiliateProfile, getCurrUserAffTree, logouUser, authenticationApiAffiliate };
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId, getAffiliateProfile, getCurrUserAffTree, logouUser, authenticationApiAffiliate, resetPassword, forgotPassword };

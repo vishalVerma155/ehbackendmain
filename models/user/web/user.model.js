@@ -98,6 +98,12 @@ const userSchema = new mongoose.Schema({
     tokenVersion: {
         type: String
     },
+    otp: {
+        type: String
+    },
+    otpExpires: {
+        type: Date
+    },
     referrer: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",
