@@ -457,6 +457,34 @@ const forgotPassword = async (req, res) => {
 };
 
 // Verify OTP and Reset Password
+const matchOTP = async (req, res) => {
+   try {
+      const { email, otp } = req.body;
+
+      const user = await User.findOne({ email });
+      if (!user) {
+         return res.status(400).json({ success: false, error: 'User not found' });
+      }
+
+
+      if (user.otpExpires < Date.now()) {
+         return res.status(400).json({ message: 'OTP has expired' });
+      }
+
+      const isOTPCorrect = await comparePassword(otp, user.otp);
+
+      if(!isOTPCorrect){
+         return res.status(400).json({ success: false, error: 'Invalid OTP' });
+      }
+
+
+      res.status(200).json({ success: true, message: 'Otp matched' });
+   } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+   }
+};
+
+// Verify OTP and Reset Password
 const resetPassword = async (req, res) => {
    try {
       const { email, otp, newPassword } = req.body;
@@ -674,4 +702,4 @@ const authenticationApiAffiliate = (req, res) => {
 
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId, getAffiliateProfile, getCurrUserAffTree, logouUser, authenticationApiAffiliate, resetPassword, forgotPassword };
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId, getAffiliateProfile, getCurrUserAffTree, logouUser, authenticationApiAffiliate, resetPassword, forgotPassword, matchOTP };

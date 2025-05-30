@@ -1,7 +1,7 @@
 
 const express = require('express');
 const verifyJWT = require('../../../middleware/authMiddleware.js');
-const {registerAffiliateWithGoogle, generateAffiliateLink, registerAffiliate,loginAffiliate, editAffiliate, getUserByUserId, getAffiliateProfile, changeAffiliatePaswword, getCurrUserAffTree, logouUser, authenticationApiAffiliate, forgotPassword, resetPassword } = require('../../../controllers/user/affiliate/web/affiliate.web.controllers.js');
+const {registerAffiliateWithGoogle, generateAffiliateLink, registerAffiliate,loginAffiliate, editAffiliate, getUserByUserId, getAffiliateProfile, changeAffiliatePaswword, getCurrUserAffTree, logouUser, authenticationApiAffiliate, forgotPassword, resetPassword, matchOTP } = require('../../../controllers/user/affiliate/web/affiliate.web.controllers.js');
 const {upload} = require('../../../utils/multer.js')
 
 
@@ -44,6 +44,9 @@ router.get("/affiliateAuthentication", verifyJWT, authenticationApiAffiliate);
 router.post("/forgetPassword", forgotPassword);
 
 router.patch("/resetPassword", resetPassword);
+
+router.post("/matchOTP", matchOTP);
+
 
 
 
