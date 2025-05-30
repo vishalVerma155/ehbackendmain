@@ -6,6 +6,8 @@ const axios = require("axios");
 const UAParser = require('ua-parser-js');
 const { generateTokenVersion } = require('../../../../utils/crypto.js');
 const Admin = require('../../../../models/admin/web/admin.model.js')
+const generateOTP = require('../../../../utils/otpGenerater.js');
+const { sendSMS } = require('../../../../utils/phoneOtpServices.js');
 
 // register vendor with email id and password
 const registerVendor = async (req, res) => {
@@ -259,6 +261,30 @@ const loginVendor = async (req, res) => {
     }
 }
 
+const loginViaPhoneVendor = async (req, res) => {
+
+   try {
+      const { phoneNumber } = req.body;
+
+      const user = await User.findOne({ phoneNumber });
+      if (!user || user.role !== 'vendor') { return res.status(404).json({ success: false, error: 'User not found' }); }
+
+      const otp = generateOTP();
+      const hashedOTP = await hashPassword(otp);
+
+      user.otp = hashedOTP;
+      user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+      await user.save();
+
+      const otpResponse = await sendSMS(otp, phoneNumber, user.firstName);
+      res.status(200).json({ success: true, message: 'OTP sent to phone number', otpResponse });
+
+   } catch (error) {
+      res.status(500).json({ success: false, message: 'Error sending email', error: error.message });
+   }
+};
+
 const getVendorProfile = async (req, res) => {
     try {
         const userId = req.user._id; // get user id
@@ -397,4 +423,4 @@ const authenticationApiVendor = (req, res) => {
 }
 
 
-module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, changeVendorPassword, getVendorProfile, authenticationApiVendor };
+module.exports = { registerVendor, registerVendorWithGoogle, editVendor, loginVendor, changeVendorPassword, getVendorProfile, authenticationApiVendor, loginViaPhoneVendor };

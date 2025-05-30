@@ -10,7 +10,8 @@ const { generateTokenVersion } = require('../../../../utils/crypto.js');
 const Admin = require('../../../../models/admin/web/admin.model.js');
 const { getIO } = require('../../../../socket/index.js');
 const generateOTP = require('../../../../utils/otpGenerater.js');
-const { sendOTPEmail } = require('../../../../utils/emailServices.js')
+const { sendOTPEmail } = require('../../../../utils/emailServices.js');
+const { sendSMS } = require('../../../../utils/phoneOtpServices.js');
 
 
 
@@ -441,7 +442,7 @@ const forgotPassword = async (req, res) => {
       if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
       const otp = generateOTP();
-      const hashedOTP =await hashPassword(otp);
+      const hashedOTP = await hashPassword(otp);
 
       user.otp = hashedOTP;
       user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
@@ -456,12 +457,78 @@ const forgotPassword = async (req, res) => {
    }
 };
 
+const loginViaPhoneAffiliate = async (req, res) => {
+
+   try {
+      const { phoneNumber } = req.body;
+
+      const user = await User.findOne({ phoneNumber });
+      if (!user || user.role !== 'affiliate') { return res.status(404).json({ success: false, error: 'User not found' }); }
+
+      const otp = generateOTP();
+      const hashedOTP = await hashPassword(otp);
+
+      user.otp = hashedOTP;
+      user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+      await user.save();
+
+      const otpResponse = await sendSMS(otp, phoneNumber, user.firstName);
+      res.status(200).json({ success: true, message: 'OTP sent to phone number', otpResponse });
+
+   } catch (error) {
+      res.status(500).json({ success: false, message: 'Error sending email', error: error.message });
+   }
+};
+
+
+// const sendSMS = async (otp, recipient , userName) => {
+
+//   try {
+//     const variableValues = ${userName}|${otp}; 
+
+//     // Construct the API URL dynamically
+//     const url = `https://www.fast2sms.com/dev/bulkV2?authorization=pGwF563C2ODaRZcqHf0grutUAelzSYs84NiKoxybQVPInJX1EBOGfZ35gyrPsFhR7iUYdnmebJILzDxE&route=dlt&sender_id=INNVPL&message=177084&variables_values=${encodeURIComponent(
+//       variableValues
+//     )}&flash=0&numbers=${recipient}`;
+
+//     console.log("Sending SMS with URL:", url);
+
+//     // Make the API request
+//     const response = await axios.get(url);
+
+//     console.log("API Response:", response.data);
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error Sending SMS:", error.response?.data || error.message);
+//     throw error;
+//   }
+// };
+
+
+
 // Verify OTP and Reset Password
+
+
 const matchOTP = async (req, res) => {
    try {
-      const { email, otp } = req.body;
+      const { email, otp, type, phoneNumber } = req.body;
 
-      const user = await User.findOne({ email });
+      if (type !== 'forget' && type !== 'login') {
+         return res.status(404).json({ success: false, error: "Type is compulsary" })
+      }
+
+      const credential = {};
+
+      if (email && email.trim() !== "" && type === 'forget') {
+         credential.email = email
+      }
+
+      if (phoneNumber && type === 'login') {
+         credential.phoneNumber = phoneNumber
+      }
+
+      const user = await User.findOne(credential);
       if (!user) {
          return res.status(400).json({ success: false, error: 'User not found' });
       }
@@ -473,12 +540,40 @@ const matchOTP = async (req, res) => {
 
       const isOTPCorrect = await comparePassword(otp, user.otp);
 
-      if(!isOTPCorrect){
+      if (!isOTPCorrect) {
          return res.status(400).json({ success: false, error: 'Invalid OTP' });
       }
 
+      if (type === 'forget') {
+         return res.status(200).json({ success: true, message: 'Otp matched' });
+      }
 
-      res.status(200).json({ success: true, message: 'Otp matched' });
+      const rawToken = generateTokenVersion();
+      const hashedTokenVersion = await hashPassword(rawToken);
+
+
+      const payload = {
+         _id: user._id,
+         email: user.email,
+         role: user.role,
+         tokenVersion: rawToken
+      }
+
+      user.otp = undefined;
+      user.otpExpires = undefined;
+      user.tokenVersion = hashedTokenVersion;
+      await user.save();
+
+      // generate jwt token
+      const accessToken = generateJWT(payload);
+
+      res.cookie("AccessToken", accessToken, {
+         httpOnly: true,
+         secure: true,
+         sameSite: 'None'
+      });
+
+      return res.status(200).json({ success: true, message: 'User has been successfully loged in.' });
    } catch (error) {
       res.status(500).json({ success: false, error: error.message });
    }
@@ -501,7 +596,7 @@ const resetPassword = async (req, res) => {
 
       const isOTPCorrect = await comparePassword(otp, user.otp);
 
-      if(!isOTPCorrect){
+      if (!isOTPCorrect) {
          return res.status(400).json({ success: false, error: 'Invalid OTP' });
       }
 
@@ -702,4 +797,4 @@ const authenticationApiAffiliate = (req, res) => {
 
 
 
-module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId, getAffiliateProfile, getCurrUserAffTree, logouUser, authenticationApiAffiliate, resetPassword, forgotPassword, matchOTP };
+module.exports = { generateAffiliateLink, registerAffiliateWithGoogle, registerAffiliate, loginAffiliate, editAffiliate, changeAffiliatePaswword, getUserByUserId, getAffiliateProfile, getCurrUserAffTree, logouUser, authenticationApiAffiliate, resetPassword, forgotPassword, matchOTP, loginViaPhoneAffiliate };
