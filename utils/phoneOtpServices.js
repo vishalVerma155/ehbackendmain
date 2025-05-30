@@ -14,7 +14,6 @@ const sendSMS = async (otp, recipient, userName) => {
         // Make the API request
         const response = await axios.get(url);
 
-        console.log("API Response:", response.data);
         return response.data;
     } catch (error) {
         console.error("Error Sending SMS:", error.response?.data || error.message)
