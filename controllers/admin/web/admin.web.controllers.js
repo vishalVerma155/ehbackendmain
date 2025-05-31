@@ -191,7 +191,7 @@ const editAnyUser = async (req, res) => {
         if (req.user.role !== "admin") {
             return res.status(404).json({ success: false, error: "Only admin can do this" })
         }
-        const { firstName, lastName, email, phoneNumber, userName, groups, password, storeName, country, address, soloSale, clubName } = req.body;
+        const { firstName, lastName, email, phoneNumber, userName, groups, password, storeName, country, address, soloSale, clubName, vendorStatus } = req.body;
         const user = req.params.userId;
         const img = req.file?.path || undefined; // get image
 
@@ -256,10 +256,28 @@ const editAnyUser = async (req, res) => {
             payload.clubName = clubName;
         }
 
+        if (vendorStatus && vendorStatus.trim() !== "") {
+            payload.vendorStatus = vendorStatus;
+        }
+
         const updatedAffiliate = await User.findByIdAndUpdate(user, payload, { new: true, runValidators: true });
 
         if (!updatedAffiliate) {
             return res.status(400).json({ success: false, error: "User not found" });
+        }
+
+        if (vendorStatus) {
+            const notification = await axios.post(
+                "https://ehbackendmain.onrender.com/notification/createNotification",
+                {
+                    recipient: updatedAffiliate._id,
+                    heading: `Vendor registration request has been ${updatedAffiliate.vendorStatus}`,
+                    message: `Your vendor request has been ${updatedAffiliate.vendorStatus} from Earning handle.${updatedAffiliate.vendorStatus === "approved"? "Welcome to Earning handle family" : "Sorry for the inconvenience caused."}`,
+                    sender: req.user._id,
+                    senderRole: req.user.role,
+                    receiverRole: updatedAffiliate.role
+                }
+            );
         }
 
         return res.status(200).json({ success: true, message: "User is updated", updatedAffiliate });

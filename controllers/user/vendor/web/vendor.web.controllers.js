@@ -50,7 +50,8 @@ const registerVendor = async (req, res) => {
             password: hashedPassword,
             storeName: store,
             role: "vendor",
-            userId: "NV1"
+            userId: "NV1",
+            vendorStatus : "inReview"
         })
 
         // save affiliate
@@ -73,7 +74,7 @@ const registerVendor = async (req, res) => {
             {
                 recipient: admin._id,
                 heading: `New user registered in ${newUser.role} panel.`,
-                message: `${newUser.firstName} has been registered in ${newUser.role}`,
+                message: `${newUser.firstName} has applied for registration in ${newUser.role}`,
                 sender: newUser._id,
                 senderRole: newUser.role,
                 receiverRole: admin.role
@@ -215,7 +216,7 @@ const loginVendor = async (req, res) => {
         const user = await User.findOne({ $or: [{ userName }, { email: userName }] });
 
 
-        if (!user) {
+        if (!user || user.vendorStatus !== "approved") {
             return res.status(401).json({ success: false, error: "User is not existed." });
         }
 

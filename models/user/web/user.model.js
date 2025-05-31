@@ -112,7 +112,7 @@ const userSchema = new mongoose.Schema({
     vendorStatus: {
         type: String,
         trim: true,
-        enum: ["inReview", "accepted", "denied"]
+        enum: ["inReview", "approved", "denied"]
     },
     referredUsers: [
         {
