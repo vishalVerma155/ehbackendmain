@@ -109,6 +109,11 @@ const userSchema = new mongoose.Schema({
         ref: "user",
         default: null
     },
+    vendorStatus: {
+        type: String,
+        trim: true,
+        enum: ["inReview", "accepted", "denied"]
+    },
     referredUsers: [
         {
             type: mongoose.Schema.Types.ObjectId,
