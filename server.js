@@ -28,7 +28,8 @@ const clubRouter = require("./routes/affiliate/affiliateClub/affiliateClub.route
 const membershipModelRouter = require("./routes/vendor/membershipModel/vendorMembership.routes.js");
 const phonePeRouter = require("./routes/phonePe/phonePe.routes.js");
 const saleEventRouter = require('./routes/saleEvent/saleEvent.routes.js');
-const notificationRouter = require('./routes/notification/notification.routes.js')
+const notificationRouter = require('./routes/notification/notification.routes.js');
+const otpVerificationRouter = require("./routes/otpVerication/otpVerification.routes.js")
 
 
 // Load config from env file
@@ -79,6 +80,7 @@ app.use("/membership", membershipModelRouter);
 app.use("/phone", phonePeRouter);
 app.use("/saleEvent", saleEventRouter);
 app.use("/notification", notificationRouter);
+app.use("/register", otpVerificationRouter);
 
 
 

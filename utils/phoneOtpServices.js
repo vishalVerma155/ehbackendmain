@@ -3,7 +3,7 @@ require('dotenv').config();
 
 
 const sendSMS = async (otp, recipient, userName) => {
-    try {
+   
         const variableValues = `${userName}|${otp}`;
 
         // Construct the API URL dynamically
@@ -15,9 +15,7 @@ const sendSMS = async (otp, recipient, userName) => {
         const response = await axios.get(url);
 
         return response.data;
-    } catch (error) {
-        console.error("Error Sending SMS:", error.response?.data || error.message)
-    }
+    
 };
 
 module.exports = { sendSMS };
