@@ -51,7 +51,7 @@ const registerVendor = async (req, res) => {
             storeName: store,
             role: "vendor",
             userId: "NV1",
-            vendorStatus : "inReview"
+            vendorStatus: "inReview"
         })
 
         // save affiliate
@@ -96,7 +96,12 @@ const registerVendorWithGoogle = async (req, res) => {
 
         if (googleId && googleId.trim() !== "") {
 
-            const isUserExisted = await User.findOne({ googleId: googleId });
+            const isUserExisted = await User.findOne({
+                $or: [
+                    { googleId: googleId },
+                    { email: email }
+                ]
+            });
 
             if (!isUserExisted) {
                 // check blank fields
@@ -114,7 +119,8 @@ const registerVendorWithGoogle = async (req, res) => {
                     email,
                     userId: "fa1",
                     googleId,
-                    role: "vendor"
+                    role: "vendor",
+                    vendorStatus: "inReview"
                 })
 
                 await newUser.save(); // save user
@@ -128,27 +134,27 @@ const registerVendorWithGoogle = async (req, res) => {
 
                 const wallet = await axios.post(`https://ehbackendmain.onrender.com/wallet/createWallet/${newUser._id}`);
 
-                const rawToken = generateTokenVersion();
-                const hashedTokenVersion = await hashPassword(rawToken);
+                // const rawToken = generateTokenVersion();
+                // const hashedTokenVersion = await hashPassword(rawToken);
 
-                const payload = {
-                    _id: newUser._id,
-                    email: newUser.email,
-                    role: newUser.role,
-                    tokenVersion: rawToken
-                }
+                // const payload = {
+                //     _id: newUser._id,
+                //     email: newUser.email,
+                //     role: newUser.role,
+                //     tokenVersion: rawToken
+                // }
 
-                newUser.tokenVersion = hashedTokenVersion;
-                await newUser.save();
+                // newUser.tokenVersion = hashedTokenVersion;
+                // await newUser.save();
 
-                // generate jwt token
-                const accessToken = generateJWT(payload);
+                // // generate jwt token
+                // const accessToken = generateJWT(payload);
 
-                res.cookie("AccessToken", accessToken, {
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: 'LAX'
-                });
+                // res.cookie("AccessToken", accessToken, {
+                //     httpOnly: true,
+                //     secure: true,
+                //     sameSite: 'LAX'
+                // });
 
                 const admin = await Admin.findOne({ role: "admin" });
 
@@ -169,6 +175,10 @@ const registerVendorWithGoogle = async (req, res) => {
 
             if (isUserExisted.role !== "vendor") {
                 return res.status(401).json({ success: false, error: "Invalid user." });
+            }
+
+            if (isUserExisted.vendorStatus !== "approved") {
+                return res.status(401).json({ success: false, error: `You are not authrized for log in because you vendor status is ${isUserExisted.vendorStatus}` });
             }
 
             const rawToken = generateTokenVersion();
@@ -216,7 +226,7 @@ const loginVendor = async (req, res) => {
         const user = await User.findOne({ $or: [{ userName }, { email: userName }] });
 
 
-        if (!user || user.vendorStatus !== "approved") {
+        if (!user) {
             return res.status(401).json({ success: false, error: "User is not existed." });
         }
 
@@ -224,6 +234,9 @@ const loginVendor = async (req, res) => {
             return res.status(401).json({ success: false, error: "Invalid user" });
         }
 
+        if (user.vendorStatus !== "approved") {
+            return res.status(401).json({ success: false, error: `You are not authrized for log in because you vendor status is ${isUserExisted.vendorStatus}` });
+        }
         // compare password
         const isPasswordCorrect = await comparePassword(password, user.password);
 
@@ -264,26 +277,26 @@ const loginVendor = async (req, res) => {
 
 const loginViaPhoneVendor = async (req, res) => {
 
-   try {
-      const { phoneNumber } = req.body;
+    try {
+        const { phoneNumber } = req.body;
 
-      const user = await User.findOne({ phoneNumber });
-      if (!user || user.role !== 'vendor') { return res.status(404).json({ success: false, error: 'User not found' }); }
+        const user = await User.findOne({ phoneNumber });
+        if (!user || user.role !== 'vendor') { return res.status(404).json({ success: false, error: 'User not found' }); }
 
-      const otp = generateOTP();
-      const hashedOTP = await hashPassword(otp);
+        const otp = generateOTP();
+        const hashedOTP = await hashPassword(otp);
 
-      user.otp = hashedOTP;
-      user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+        user.otp = hashedOTP;
+        user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-      await user.save();
+        await user.save();
 
-      const otpResponse = await sendSMS(otp, phoneNumber, user.firstName);
-      res.status(200).json({ success: true, message: 'OTP sent to phone number', otpResponse });
+        const otpResponse = await sendSMS(otp, phoneNumber, user.firstName);
+        res.status(200).json({ success: true, message: 'OTP sent to phone number', otpResponse });
 
-   } catch (error) {
-      res.status(500).json({ success: false, message: 'Error sending email', error: error.message });
-   }
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error sending email', error: error.message });
+    }
 };
 
 const getVendorProfile = async (req, res) => {

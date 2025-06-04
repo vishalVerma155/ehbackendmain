@@ -31,7 +31,7 @@ const getAllBlogs = async (req, res) => {
         const blogs = await Blog.find().sort({ createdAt: -1 });
         return res.status(200).json({ success: true, blogs });
     } catch (err) {
-        return res.status(500).json({ success: false, error: "Server Error" });
+        return res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -48,7 +48,7 @@ const getBlogById = async (req, res) => {
 
         return res.status(200).json({ success: true, blog });
     } catch (err) {
-        return res.status(500).json({ success: false, error: "Invalid ID or server error" });
+        return res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -78,7 +78,7 @@ const updateBlog = async (req, res) => {
 
         return res.status(200).json({ success: true, blog: updated });
     } catch (err) {
-        return res.status(500).json({ success: false, error: "Server Error" });
+        return res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -100,7 +100,7 @@ const deleteBlog = async (req, res) => {
 
         return res.status(200).json({ success: true, message: "Blog deleted" });
     } catch (err) {
-        return res.status(500).json({ success: false, error: "Server Error" });
+        return res.status(500).json({ success: false, error: err.message });
     }
 };
 

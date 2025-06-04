@@ -143,7 +143,12 @@ const registerAffiliateWithGoogle = async (req, res) => {
             }
          }
 
-         const isUserExisted = await User.findOne({ googleId: googleId });
+         const isUserExisted = await User.findOne({
+            $or: [
+               { googleId: googleId },
+               { email: email }
+            ]
+         });
 
          if (!isUserExisted) {
             // check blank fields
@@ -227,6 +232,10 @@ const registerAffiliateWithGoogle = async (req, res) => {
             return res.status(404).json({ success: false, error: "Invalid user" });
          }
 
+         if(!isUserExisted.googleId){
+            isUserExisted.googleId = googleId;
+         }
+
          const rawToken = generateTokenVersion();
          const hashedTokenVersion = await hashPassword(rawToken);
 
@@ -248,8 +257,6 @@ const registerAffiliateWithGoogle = async (req, res) => {
             secure: true,
             sameSite: 'None'
          });
-
-
 
          return res.status(200).json({ success: true, Message: "Affiliate has been  sucessfully Loged in." });
       }
@@ -594,24 +601,24 @@ const resetPassword = async (req, res) => {
       if (!user.otp) {
          return res.status(400).json({ success: false, error: 'Otp not found' });
       }
-      
+
       if (!user.otpExpires || user.otpExpires < Date.now()) {
          return res.status(400).json({ message: 'OTP has expired' });
       }
-      
+
       const isOTPCorrect = await comparePassword(otp, user.otp);
-      
+
       if (!isOTPCorrect) {
          return res.status(400).json({ success: false, error: 'Invalid OTP' });
       }
-      
+
       const hashedPassword = await hashPassword(newPassword);
-     
+
       user.password = hashedPassword;
       user.otp = undefined;
       user.otpExpires = undefined;
       await user.save();
-   
+
       res.status(200).json({ success: true, message: 'Password reset successful' });
    } catch (error) {
       res.status(500).json({ success: false, message: 'Error sending email', error: error.message });
