@@ -177,6 +177,10 @@ const registerVendorWithGoogle = async (req, res) => {
                 return res.status(401).json({ success: false, error: "Invalid user." });
             }
 
+            if (!isUserExisted.googleId) {
+                isUserExisted.googleId = googleId
+            }
+
             if (isUserExisted.vendorStatus !== "approved") {
                 return res.status(401).json({ success: false, error: `You are not authrized for log in because you vendor status is ${isUserExisted.vendorStatus}` });
             }
