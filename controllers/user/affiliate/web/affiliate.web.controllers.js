@@ -436,9 +436,19 @@ const getUserByUserId = async (req, res) => {
 const forgotPassword = async (req, res) => {
 
    try {
-      const { email } = req.body;
+      const { email, phoneNumber } = req.body;
 
-      const user = await User.findOne({ email });
+      const payload = {};
+
+      if (email && email.trim() !== "") {
+         payload.email = email;
+      }
+
+      if (phoneNumber) {
+         payload.phoneNumber = phoneNumber;
+      }
+
+      const user = await User.findOne(payload);
       if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
       const otp = generateOTP();
@@ -449,8 +459,15 @@ const forgotPassword = async (req, res) => {
 
       await user.save();
 
-      await sendOTPEmail(email, otp);
-      res.status(200).json({ success: true, message: 'OTP sent to email' });
+      if (email && email.trim() !== "") {
+         await sendOTPEmail(email, otp);
+      }
+
+      if (phoneNumber) {
+         await sendSMS(otp, phoneNumber, user.firstName);
+      }
+
+      res.status(200).json({ success: true, message: `OTP sent to ${email ? email : phoneNumber}` });
 
    } catch (error) {
       res.status(500).json({ success: false, message: 'Error sending email', error: error.message });
@@ -481,32 +498,6 @@ const loginViaPhoneAffiliate = async (req, res) => {
    }
 };
 
-
-// const sendSMS = async (otp, recipient , userName) => {
-
-//   try {
-//     const variableValues = ${userName}|${otp}; 
-
-//     // Construct the API URL dynamically
-//     const url = `https://www.fast2sms.com/dev/bulkV2?authorization=pGwF563C2ODaRZcqHf0grutUAelzSYs84NiKoxybQVPInJX1EBOGfZ35gyrPsFhR7iUYdnmebJILzDxE&route=dlt&sender_id=INNVPL&message=177084&variables_values=${encodeURIComponent(
-//       variableValues
-//     )}&flash=0&numbers=${recipient}`;
-
-//     console.log("Sending SMS with URL:", url);
-
-//     // Make the API request
-//     const response = await axios.get(url);
-
-//     console.log("API Response:", response.data);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error Sending SMS:", error.response?.data || error.message);
-//     throw error;
-//   }
-// };
-
-
-
 // Verify OTP and Reset Password
 
 
@@ -520,11 +511,11 @@ const matchOTP = async (req, res) => {
 
       const credential = {};
 
-      if (email && email.trim() !== "" && type === 'forget') {
+      if (email && email.trim() !== "") {
          credential.email = email
       }
 
-      if (phoneNumber && type === 'login') {
+      if (phoneNumber) {
          credential.phoneNumber = phoneNumber
       }
 
@@ -582,32 +573,45 @@ const matchOTP = async (req, res) => {
 // Verify OTP and Reset Password
 const resetPassword = async (req, res) => {
    try {
-      const { email, otp, newPassword } = req.body;
+      const { email, otp, newPassword, phoneNumber } = req.body;
 
-      const user = await User.findOne({ email });
+      const credential = {};
+
+      if (email && email.trim() !== "") {
+         credential.email = email
+      }
+
+      if (phoneNumber) {
+         credential.phoneNumber = phoneNumber
+      }
+
+      const user = await User.findOne(credential);
+
       if (!user) {
          return res.status(400).json({ success: false, error: 'User not found' });
       }
 
-
-      if (user.otpExpires < Date.now()) {
+      if (!user.otp) {
+         return res.status(400).json({ success: false, error: 'Otp not found' });
+      }
+      
+      if (!user.otpExpires || user.otpExpires < Date.now()) {
          return res.status(400).json({ message: 'OTP has expired' });
       }
-
+      
       const isOTPCorrect = await comparePassword(otp, user.otp);
-
+      
       if (!isOTPCorrect) {
          return res.status(400).json({ success: false, error: 'Invalid OTP' });
       }
-
-
+      
       const hashedPassword = await hashPassword(newPassword);
+     
       user.password = hashedPassword;
       user.otp = undefined;
       user.otpExpires = undefined;
-
       await user.save();
-
+   
       res.status(200).json({ success: true, message: 'Password reset successful' });
    } catch (error) {
       res.status(500).json({ success: false, message: 'Error sending email', error: error.message });
