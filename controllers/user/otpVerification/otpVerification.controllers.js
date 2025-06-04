@@ -3,8 +3,16 @@ const generateOTP = require("../../../utils/otpGenerater.js");
 const { comparePassword, hashPassword } = require("../../../utils/bcrypt.js");
 const { sendOTPEmail } = require("../../../utils/emailServices.js");
 const { sendSMS } = require("../../../utils/phoneOtpServices.js")
+const jwt = require('jsonwebtoken');
 
+const generateJWT = (user) => {
+    return jwt.sign(user, process.env.JWT_SECURITY_KEY, { expiresIn: '10m' });
+}
 
+const verifyJwt = (token) => {
+    const decoded = jwt.verify(token, process.env.JWT_SECURITY_KEY);
+    return decoded;
+}
 
 const verifyEmailAndPhone = async (req, res) => {
 
@@ -13,15 +21,16 @@ const verifyEmailAndPhone = async (req, res) => {
 
         const otp = generateOTP();
         const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-        
+
 
         const hashedOTP = await hashPassword(otp);
+        const jwtOtp = generateJWT({hashedOTP});
         
 
         if (email && email.trim() !== "") {
             await sendOTPEmail(email, otp);
 
-            res.cookie("EmailToken", {hashedOTP, otpExpires}, {
+            res.cookie("EmailToken", { jwtOtp, otpExpires }, {
                 httpOnly: true,
                 secure: true,
                 sameSite: 'None'
@@ -31,12 +40,11 @@ const verifyEmailAndPhone = async (req, res) => {
         }
 
         if (phoneNumber) {
-            console.log("Enter in phone")
 
             // otp, recipient, userName
             await sendSMS(otp, phoneNumber, "User");
 
-            res.cookie("PhoneToken", {hashedOTP, otpExpires}, {
+            res.cookie("PhoneToken", { jwtOtp, otpExpires }, {
                 httpOnly: true,
                 secure: true,
                 sameSite: 'None'
@@ -45,51 +53,56 @@ const verifyEmailAndPhone = async (req, res) => {
             return res.status(200).json({ success: true, message: `Otp sent on phone number : ${phoneNumber}` });
         }
 
+            return res.status(200).json({ success: false, message: `Phone number or email id is required` });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error sending Otp', error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
 
 
-const checkEmailAndPhone = async (req, res) => {
 
+const verifyOTP = async (req, res) => {
     try {
-        const { email, phoneNumber, otp } = req.body;
-        const token = req.cookies.AccessToken;
-
-
-        if (email && email.trim() !== "") {
-            await sendOTPEmail(email, otp);
-
-            res.cookie("EmailToken", hashedOTP, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'None'
-            });
-
-            return res.status(200).json({ success: true, message: `Otp sent on ${email}` });
+        const { otp, type } = req.body; // type = "email" or "phone"
+        if (!otp || !type) {
+            return res.status(400).json({ success: false, error: "OTP and type are required." });
         }
 
-        if (phoneNumber) {
-            console.log("Enter in phone")
+        const tokenCookie = type === "email" ? req.cookies.EmailToken : req.cookies.PhoneToken;
 
-            // otp, recipient, userName
-            await sendSMS(otp, phoneNumber, "User");
-
-            res.cookie("PhoneToken", hashedOTP, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'None'
-            });
-
-            return res.status(200).json({ success: true, message: `Otp sent on phone number : ${phoneNumber}` });
+        if (!tokenCookie || !tokenCookie.jwtOtp || !tokenCookie.otpExpires) {
+            return res.status(400).json({ success: false, error: "OTP token not found or expired. Please request again." });
         }
+
+        const { jwtOtp, otpExpires } = tokenCookie;
+
+        const decodeToken = verifyJwt(jwtOtp);
+
+        if (Date.now() > otpExpires) {
+            return res.status(400).json({ success: false, error: "OTP has expired." });
+        }
+
+        const isMatch = await comparePassword(otp, decodeToken.hashedOTP);
+        if (!isMatch) {
+            return res.status(400).json({ success: false, error: "Invalid OTP." });
+        }
+
+        // Clear the cookie after successful verification
+        res.clearCookie(type === "email" ? "EmailToken" : "PhoneToken", {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'None'
+        });
+
+        return res.status(200).json({ success: true, message: "OTP verified successfully." });
 
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error sending Otp', error: error.message });
+        return res.status(500).json({ success: false, message: "Error verifying OTP", error: error.message });
     }
 };
 
 
-module.exports = { verifyEmailAndPhone };
+
+module.exports = { verifyEmailAndPhone, verifyOTP };
