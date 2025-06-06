@@ -30,7 +30,8 @@ const phonePeRouter = require("./routes/phonePe/phonePe.routes.js");
 const saleEventRouter = require('./routes/saleEvent/saleEvent.routes.js');
 const notificationRouter = require('./routes/notification/notification.routes.js');
 const otpVerificationRouter = require("./routes/otpVerication/otpVerification.routes.js");
-const blogRouter = require("./routes/blogs/blogs.routes.js")
+const blogRouter = require("./routes/blogs/blogs.routes.js");
+const feedbackRouter = require('./routes/customerFeedback/feedback.routes.js')
 
 
 // Load config from env file
@@ -83,6 +84,7 @@ app.use("/saleEvent", saleEventRouter);
 app.use("/notification", notificationRouter);
 app.use("/register", otpVerificationRouter);
 app.use("/blog", blogRouter);
+app.use("/customerFeedback", feedbackRouter);
 
 
 
