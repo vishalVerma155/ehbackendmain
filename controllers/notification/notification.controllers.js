@@ -1,5 +1,6 @@
 const Notification = require('../../models/notification/notification.model.js');
-const { getIO } = require('../../socket/index.js')
+const { getIO } = require('../../socket/index.js');
+const mongoose = require('mongoose')
 
 
 // Create and send a notification
@@ -130,47 +131,31 @@ const deleteNotification = async (req, res) => {
     }
 };
 
+const deleteNotifications = async (req, res) => {
+  try {
+    const { ids } = req.body;
 
-// // Mark notification as seen
-// const markAsSeen = async (req, res) => {
-//     try {
-//         const notificationId = req.params.id;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, error: "No IDs provided" });
+    }
 
-//         const updated = await Notification.findOneAndUpdate(
-//             { _id: notificationId},
-//             { seen: true },
-//             { new: true }
-//         );
+    const result = await Notification.deleteMany({ _id: { $in: ids } });
 
-//         if (!updated) {
-//             return res.status(404).json({ success: false, error: 'Notification not found' });
-//         }
+    return res.status(200).json({
+      success: true,
+      deletedCount: result.deletedCount
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
 
-//        return res.status(200).json({ success: true, message: "Notification has been seen" });
 
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ error: 'Failed to mark as seen' });
-//     }
-// };
-
-// Mark all notifications as seen
-// const markAllAsSeen = async (req, res) => {
-//     try {
-//         const userId = req.user._id;
-
-//         await Notification.updateMany({ recipient: userId, seen: false }, { seen: true });
-
-//         res.json({ message: 'All notifications marked as seen' });
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ error: 'Failed to mark notifications as seen' });
-//     }
-// };
 
 module.exports = {
     createNotification,
     getUserNotifications,
     deleteNotification,
-    getNotificationById
+    getNotificationById,
+    deleteNotifications
 };

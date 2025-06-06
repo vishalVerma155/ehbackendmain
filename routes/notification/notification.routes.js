@@ -1,6 +1,6 @@
 const express = require('express');
 const verifyJWT = require('../../middleware/authMiddleware.js');
-const { createNotification, getUserNotifications, deleteNotification, getNotificationById } = require('../../controllers/notification/notification.controllers.js');
+const { createNotification, getUserNotifications, deleteNotification, getNotificationById , deleteNotifications} = require('../../controllers/notification/notification.controllers.js');
 
 
 
@@ -14,6 +14,7 @@ router.delete("/deleteNotification/:notificationId", verifyJWT, deleteNotificati
 
 router.get("/getNotificationById/:notificationId", verifyJWT, getNotificationById);
 
+router.delete("/deleteNotifications", verifyJWT, deleteNotifications);
 
 
 
